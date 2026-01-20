@@ -1,0 +1,17 @@
+port = "8080"
+plugin_dir = "./plugins"
+
+[log]
+level = "info" # debug, info, warn, error
+format = "json" # console or json
+
+[log.output]
+stdout = true
+stderr = false
+file = ""
+
+[log.rotation]
+enabled = false
+max_size = 100 # MB unit
+max_age = 7 # day
+compress = true # gzip compression

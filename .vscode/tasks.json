@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-plugins-debug",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-lc",
+                "rm -rf ./dist/debug && mkdir -p ./dist/debug/plugins && for plugin in nowpayments coinbasecommerce bitpay coingate coinpayments; do echo \"Build plugin: $plugin\"; go build -buildmode=plugin -gcflags=\"all=-N -l\" -o ./dist/debug/plugins/$plugin.so ./plugins/$plugin || exit 1; done"
+            ],
+            "options": {
+                "env": {
+                    "GOTOOLCHAIN": "go1.25.6"
+                }
+            },
+            "problemMatcher": [
+                "$go"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": false,
+                "clear": true
+            }
+        }
+    ]
+}
