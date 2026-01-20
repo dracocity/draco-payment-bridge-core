@@ -10,9 +10,14 @@ import (
 )
 
 // Load loads configuration from TOML file and/or environment variables
-// Priority: environment variables > TOML file > defaults
+// Priority: TOML file > environment variables > defaults
 func Load(configPath string) (*Config, error) {
 	cfg := &Config{}
+
+	// Apply defaults and environment variables first (TOML overrides if present).
+	if err := envconfig.Process("DPBC", cfg); err != nil {
+		return nil, fmt.Errorf("failed to process environment variables: %w", err)
+	}
 
 	if configPath != "" {
 		// Load from config file if provided path
@@ -21,11 +26,6 @@ func Load(configPath string) (*Config, error) {
 				return nil, err
 			}
 		}
-	}
-
-	// Environment variables have highest priority, override TOML and apply defaults
-	if err := envconfig.Process("DPBC", cfg); err != nil {
-		return nil, fmt.Errorf("failed to process environment variables: %w", err)
 	}
 
 	// Expand relative paths to absolute paths

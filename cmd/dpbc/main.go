@@ -23,7 +23,7 @@ var app *cli.App
 func init() {
 	app = &cli.App{
 		Name:  "dpbc",
-		Usage: "dpbc",
+		Usage: "Cryptocurrency payment gateway bridge core",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "config",
