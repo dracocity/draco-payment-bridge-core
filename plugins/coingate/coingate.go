@@ -6,17 +6,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/dracocity/draco-payment-bridge-core/internal/bridge"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
 type coingatePlugin struct {
 	apiKey string
-	bridge *coingateBridge
+	pg     *coingatePG
 }
 
-type coingateBridge struct {
+type coingatePG struct {
 	apiKey string
 }
 
@@ -30,7 +30,7 @@ func (p *coingatePlugin) New() error {
 
 func (p *coingatePlugin) Load() error {
 	p.apiKey = os.Getenv("COINGATE_API_TOKEN")
-	p.bridge = &coingateBridge{apiKey: p.apiKey}
+	p.pg = &coingatePG{apiKey: p.apiKey}
 	return nil
 }
 
@@ -42,15 +42,15 @@ func (p *coingatePlugin) GetName() string {
 	return "coingate"
 }
 
-func (p *coingatePlugin) Bridge() bridge.Bridge {
-	return p.bridge
+func (p *coingatePlugin) PaymentGateway() pg.PaymentGateway {
+	return p.pg
 }
 
-func (b *coingateBridge) Name() string {
+func (b *coingatePG) Name() string {
 	return "coingate"
 }
 
-func (b *coingateBridge) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
+func (b *coingatePG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
 	paymentID := fmt.Sprintf("cg-%d", time.Now().UnixNano())
 	return &models.CreatePaymentResponse{
 		Success:    true,
@@ -64,7 +64,7 @@ func (b *coingateBridge) CreatePayment(ctx context.Context, req models.CreatePay
 	}, nil
 }
 
-func (b *coingateBridge) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
+func (b *coingatePG) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
 	return &models.PaymentStatusResponse{
 		PaymentID:   paymentID,
 		Status:      "pending",
@@ -75,7 +75,7 @@ func (b *coingateBridge) GetStatus(ctx context.Context, paymentID string) (*mode
 	}, nil
 }
 
-func (b *coingateBridge) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
+func (b *coingatePG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
 	refundType := "full"
 	amount := ""
 	if req.Amount > 0 {
@@ -93,7 +93,7 @@ func (b *coingateBridge) Refund(ctx context.Context, req models.RefundRequest) (
 	}, nil
 }
 
-func (b *coingateBridge) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (b *coingatePG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
 	return &models.WebhookResult{
 		Accepted: true,
 		Message:  "webhook received",

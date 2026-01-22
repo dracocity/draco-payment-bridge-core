@@ -1,4 +1,4 @@
-package bridge
+package pg
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
 
-// Bridge defines a payment provider integration.
-type Bridge interface {
+// PaymentGateway defines a payment provider integration.
+type PaymentGateway interface {
 	Name() string
 	CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error)
 	GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error)

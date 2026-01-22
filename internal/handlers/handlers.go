@@ -3,22 +3,22 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/dracocity/draco-payment-bridge-core/internal/bridge"
 	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/gin-gonic/gin"
 )
 
 // Handler provides HTTP handlers for the payment bridge API.
 type Handler struct {
-	registry *bridge.Registry
-	logger   logger.Logger
+	pgRegistry *pg.Registry
+	logger     logger.Logger
 }
 
-func New(registry *bridge.Registry) *Handler {
+func New(pgRegistry *pg.Registry) *Handler {
 	return &Handler{
-		registry: registry,
-		logger:   logger.WithModule("handlers"),
+		pgRegistry: pgRegistry,
+		logger:     logger.WithModule("handlers"),
 	}
 }
 
@@ -33,7 +33,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 func (h *Handler) handleHealth(c *gin.Context) {
 	resp := map[string]interface{}{
 		"status":    "ok",
-		"providers": h.registry.Names(),
+		"providers": h.pgRegistry.Names(),
 	}
 	c.JSON(http.StatusOK, resp)
 }
@@ -48,7 +48,7 @@ func (h *Handler) handleCreatePayment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "provider is required"})
 		return
 	}
-	b, ok := h.registry.Get(req.Provider)
+	b, ok := h.pgRegistry.Get(req.Provider)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unknown provider"})
 		return
@@ -70,7 +70,7 @@ func (h *Handler) handlePaymentStatus(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "provider and payment_id are required"})
 		return
 	}
-	b, ok := h.registry.Get(provider)
+	b, ok := h.pgRegistry.Get(provider)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unknown provider"})
 		return
@@ -95,7 +95,7 @@ func (h *Handler) handleRefund(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "provider and payment_id are required"})
 		return
 	}
-	b, ok := h.registry.Get(req.Provider)
+	b, ok := h.pgRegistry.Get(req.Provider)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unknown provider"})
 		return
@@ -116,7 +116,7 @@ func (h *Handler) handleWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "provider is required"})
 		return
 	}
-	b, ok := h.registry.Get(provider)
+	b, ok := h.pgRegistry.Get(provider)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unknown provider"})
 		return

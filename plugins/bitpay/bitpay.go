@@ -6,17 +6,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/dracocity/draco-payment-bridge-core/internal/bridge"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
 type bitpayPlugin struct {
 	apiKey string
-	bridge *bitpayBridge
+	pg     *bitpayPG
 }
 
-type bitpayBridge struct {
+type bitpayPG struct {
 	apiKey string
 }
 
@@ -30,7 +30,7 @@ func (p *bitpayPlugin) New() error {
 
 func (p *bitpayPlugin) Load() error {
 	p.apiKey = os.Getenv("BITPAY_API_KEY")
-	p.bridge = &bitpayBridge{apiKey: p.apiKey}
+	p.pg = &bitpayPG{apiKey: p.apiKey}
 	return nil
 }
 
@@ -42,15 +42,15 @@ func (p *bitpayPlugin) GetName() string {
 	return "bitpay"
 }
 
-func (p *bitpayPlugin) Bridge() bridge.Bridge {
-	return p.bridge
+func (p *bitpayPlugin) PaymentGateway() pg.PaymentGateway {
+	return p.pg
 }
 
-func (b *bitpayBridge) Name() string {
+func (b *bitpayPG) Name() string {
 	return "bitpay"
 }
 
-func (b *bitpayBridge) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
+func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
 	paymentID := fmt.Sprintf("bp-%d", time.Now().UnixNano())
 	return &models.CreatePaymentResponse{
 		Success:    true,
@@ -64,7 +64,7 @@ func (b *bitpayBridge) CreatePayment(ctx context.Context, req models.CreatePayme
 	}, nil
 }
 
-func (b *bitpayBridge) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
+func (b *bitpayPG) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
 	return &models.PaymentStatusResponse{
 		PaymentID:   paymentID,
 		Status:      "pending",
@@ -75,7 +75,7 @@ func (b *bitpayBridge) GetStatus(ctx context.Context, paymentID string) (*models
 	}, nil
 }
 
-func (b *bitpayBridge) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
+func (b *bitpayPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
 	refundType := "full"
 	amount := ""
 	if req.Amount > 0 {
@@ -93,7 +93,7 @@ func (b *bitpayBridge) Refund(ctx context.Context, req models.RefundRequest) (*m
 	}, nil
 }
 
-func (b *bitpayBridge) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
 	return &models.WebhookResult{
 		Accepted: true,
 		Message:  "webhook received",
