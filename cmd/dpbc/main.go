@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dracocity/draco-payment-bridge-core/internal/bridge"
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
 	"github.com/dracocity/draco-payment-bridge-core/internal/handlers"
 	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
+	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
@@ -57,10 +57,10 @@ func run(ctx *cli.Context) error {
 		logger.Warn("failed to load plugins", "error", err)
 	}
 	if len(plugins) == 0 {
-		logger.Warn("no payment bridges initialized. plugin directory", "plugin-dir", cfg.PluginDir)
+		logger.Warn("no payment gateways initialized. plugin directory", "plugin-dir", cfg.PluginDir)
 	}
 
-	registry := bridge.NewRegistry()
+	pgRegistry := pg.NewRegistry()
 	for name, p := range plugins {
 		if err := p.New(); err != nil {
 			logger.Warn("failed to initialize plugin", "plugin", name, "error", err)
@@ -70,16 +70,16 @@ func run(ctx *cli.Context) error {
 			logger.Warn("failed to load plugin", "plugin", name, "error", err)
 			continue
 		}
-		if b := p.Bridge(); b != nil {
-			registry.Register(b)
+		if ppg := p.PaymentGateway(); ppg != nil {
+			pgRegistry.Register(ppg)
 		} else {
-			logger.Warn("plugin did not return bridge", "plugin", name)
+			logger.Warn("plugin did not return payment gateway", "plugin", name)
 		}
 	}
 
 	router := gin.New()
 	router.Use(gin.Recovery())
-	handler := handlers.New(registry)
+	handler := handlers.New(pgRegistry)
 	handler.RegisterRoutes(router)
 
 	server := &http.Server{

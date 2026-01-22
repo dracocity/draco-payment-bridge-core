@@ -6,17 +6,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/dracocity/draco-payment-bridge-core/internal/bridge"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
 type coinbaseCommercePlugin struct {
 	apiKey string
-	bridge *coinbaseCommerceBridge
+	pg     *coinbaseCommercePG
 }
 
-type coinbaseCommerceBridge struct {
+type coinbaseCommercePG struct {
 	apiKey string
 }
 
@@ -30,7 +30,7 @@ func (p *coinbaseCommercePlugin) New() error {
 
 func (p *coinbaseCommercePlugin) Load() error {
 	p.apiKey = os.Getenv("COINBASE_COMMERCE_API_KEY")
-	p.bridge = &coinbaseCommerceBridge{apiKey: p.apiKey}
+	p.pg = &coinbaseCommercePG{apiKey: p.apiKey}
 	return nil
 }
 
@@ -42,15 +42,15 @@ func (p *coinbaseCommercePlugin) GetName() string {
 	return "coinbasecommerce"
 }
 
-func (p *coinbaseCommercePlugin) Bridge() bridge.Bridge {
-	return p.bridge
+func (p *coinbaseCommercePlugin) PaymentGateway() pg.PaymentGateway {
+	return p.pg
 }
 
-func (b *coinbaseCommerceBridge) Name() string {
+func (b *coinbaseCommercePG) Name() string {
 	return "coinbasecommerce"
 }
 
-func (b *coinbaseCommerceBridge) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
+func (b *coinbaseCommercePG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
 	paymentID := fmt.Sprintf("cbc-%d", time.Now().UnixNano())
 	return &models.CreatePaymentResponse{
 		Success:    true,
@@ -64,7 +64,7 @@ func (b *coinbaseCommerceBridge) CreatePayment(ctx context.Context, req models.C
 	}, nil
 }
 
-func (b *coinbaseCommerceBridge) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
+func (b *coinbaseCommercePG) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
 	return &models.PaymentStatusResponse{
 		PaymentID:   paymentID,
 		Status:      "pending",
@@ -75,7 +75,7 @@ func (b *coinbaseCommerceBridge) GetStatus(ctx context.Context, paymentID string
 	}, nil
 }
 
-func (b *coinbaseCommerceBridge) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
+func (b *coinbaseCommercePG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
 	refundType := "full"
 	amount := ""
 	if req.Amount > 0 {
@@ -93,7 +93,7 @@ func (b *coinbaseCommerceBridge) Refund(ctx context.Context, req models.RefundRe
 	}, nil
 }
 
-func (b *coinbaseCommerceBridge) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (b *coinbaseCommercePG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
 	return &models.WebhookResult{
 		Accepted: true,
 		Message:  "webhook received",

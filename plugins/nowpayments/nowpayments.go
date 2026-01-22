@@ -6,17 +6,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/dracocity/draco-payment-bridge-core/internal/bridge"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
 type nowPaymentsPlugin struct {
 	apiKey string
-	bridge *nowPaymentsBridge
+	pg     *nowPaymentsPG
 }
 
-type nowPaymentsBridge struct {
+type nowPaymentsPG struct {
 	apiKey string
 }
 
@@ -30,7 +30,7 @@ func (p *nowPaymentsPlugin) New() error {
 
 func (p *nowPaymentsPlugin) Load() error {
 	p.apiKey = os.Getenv("NOWPAYMENTS_API_KEY")
-	p.bridge = &nowPaymentsBridge{apiKey: p.apiKey}
+	p.pg = &nowPaymentsPG{apiKey: p.apiKey}
 	return nil
 }
 
@@ -42,15 +42,15 @@ func (p *nowPaymentsPlugin) GetName() string {
 	return "nowpayments"
 }
 
-func (p *nowPaymentsPlugin) Bridge() bridge.Bridge {
-	return p.bridge
+func (p *nowPaymentsPlugin) PaymentGateway() pg.PaymentGateway {
+	return p.pg
 }
 
-func (b *nowPaymentsBridge) Name() string {
+func (b *nowPaymentsPG) Name() string {
 	return "nowpayments"
 }
 
-func (b *nowPaymentsBridge) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
+func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
 	paymentID := fmt.Sprintf("np-%d", time.Now().UnixNano())
 	return &models.CreatePaymentResponse{
 		Success:    true,
@@ -64,7 +64,7 @@ func (b *nowPaymentsBridge) CreatePayment(ctx context.Context, req models.Create
 	}, nil
 }
 
-func (b *nowPaymentsBridge) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
+func (b *nowPaymentsPG) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
 	return &models.PaymentStatusResponse{
 		PaymentID:   paymentID,
 		Status:      "pending",
@@ -75,7 +75,7 @@ func (b *nowPaymentsBridge) GetStatus(ctx context.Context, paymentID string) (*m
 	}, nil
 }
 
-func (b *nowPaymentsBridge) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
+func (b *nowPaymentsPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
 	refundType := "full"
 	amount := ""
 	if req.Amount > 0 {
@@ -93,7 +93,7 @@ func (b *nowPaymentsBridge) Refund(ctx context.Context, req models.RefundRequest
 	}, nil
 }
 
-func (b *nowPaymentsBridge) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (b *nowPaymentsPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
 	return &models.WebhookResult{
 		Accepted: true,
 		Message:  "webhook received",
