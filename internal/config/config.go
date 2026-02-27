@@ -1,10 +1,13 @@
 package config
 
 type Config struct {
-	Port      string    `toml:"port" envconfig:"PORT" default:"8080"`
-	PluginDir string    `toml:"plugin_dir" envconfig:"PLUGIN_DIR" default:"./plugins"`
-	Log       LogConfig `toml:"log"`
+	Port      string              `toml:"port" envconfig:"PORT" default:"8080"`
+	PluginDir string              `toml:"plugin_dir" envconfig:"PLUGIN_DIR" default:"./plugins"`
+	Providers map[string]PGConfig `toml:"providers"`
+	Log       LogConfig           `toml:"log"`
 }
+
+type PGConfig map[string]string
 
 type LogConfig struct {
 	Level    string             `toml:"level" envconfig:"LOG_LEVEL" default:"info"`   // debug, info, warn, error

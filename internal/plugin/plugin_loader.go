@@ -57,8 +57,8 @@ func (l *PluginLoader) loadAllLocked() (map[string]Plugin, error) {
 			continue
 		}
 
-		l.plugins[p.GetName()] = p
-		l.logger.Info("loaded plugin", "plugin_name", p.GetName(), "filename", file.Name())
+		l.plugins[p.Name()] = p
+		l.logger.Info("loaded plugin", "plugin_name", p.Name(), "filename", file.Name())
 	}
 
 	return l.plugins, nil

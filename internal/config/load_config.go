@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pelletier/go-toml/v2"
@@ -18,6 +19,9 @@ func Load(configPath string) (*Config, error) {
 	if err := envconfig.Process("DPBC", cfg); err != nil {
 		return nil, fmt.Errorf("failed to process environment variables: %w", err)
 	}
+
+	// Apply providers config from environment variables.
+	applyProviderEnv(cfg)
 
 	if configPath != "" {
 		// Load from config file if provided path
@@ -49,4 +53,33 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// applyProviderEnv applies provider config from environment variables.
+// Format: DPBC_PROVIDERS_<PROVIDER>_<KEY>=value (e.g., DPBC_PROVIDERS_NOWPAYMENTS_API_KEY=...).
+// With the current call order, TOML values override env values if both exist.
+func applyProviderEnv(cfg *Config) {
+	const prefix = "DPBC_PROVIDERS_"
+	if cfg.Providers == nil {
+		cfg.Providers = make(map[string]PGConfig)
+	}
+	for _, env := range os.Environ() {
+		key, value, ok := strings.Cut(env, "=")
+		if !ok || !strings.HasPrefix(key, prefix) {
+			continue
+		}
+		parts := strings.Split(strings.TrimPrefix(key, prefix), "_")
+		if len(parts) < 2 {
+			continue
+		}
+		provider := strings.ToLower(parts[0])
+		field := strings.ToLower(strings.Join(parts[1:], "_"))
+		if provider == "" || field == "" {
+			continue
+		}
+		if cfg.Providers[provider] == nil {
+			cfg.Providers[provider] = PGConfig{}
+		}
+		cfg.Providers[provider][field] = value
+	}
 }

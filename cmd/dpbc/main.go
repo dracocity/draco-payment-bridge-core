@@ -62,11 +62,7 @@ func run(ctx *cli.Context) error {
 
 	pgRegistry := pg.NewRegistry()
 	for name, p := range plugins {
-		if err := p.New(); err != nil {
-			logger.Warn("failed to initialize plugin", "plugin", name, "error", err)
-			continue
-		}
-		if err := p.Load(); err != nil {
+		if err := p.Load(cfg.Providers[name]); err != nil {
 			logger.Warn("failed to load plugin", "plugin", name, "error", err)
 			continue
 		}

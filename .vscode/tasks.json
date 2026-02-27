@@ -7,7 +7,7 @@
             "command": "bash",
             "args": [
                 "-lc",
-                "rm -rf ./dist/debug && mkdir -p ./dist/debug/plugins && for plugin in nowpayments coinbasecommerce bitpay coingate coinpayments; do echo \"Build plugin: $plugin\"; go build -buildmode=plugin -gcflags=\"all=-N -l\" -o ./dist/debug/plugins/$plugin.so ./plugins/$plugin || exit 1; done"
+                "rm -rf ./dist/debug && mkdir -p ./dist/debug/plugins && for plugin in nowpayments bitpay coingate coinpayments; do echo \"Build plugin: $plugin\"; go build -buildmode=plugin -gcflags=\"all=-N -l\" -o ./dist/debug/plugins/$plugin.so ./plugins/$plugin || exit 1; done"
             ],
             "options": {
                 "env": {

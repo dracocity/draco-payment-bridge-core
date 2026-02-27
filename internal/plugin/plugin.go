@@ -1,11 +1,13 @@
 package plugin
 
-import "github.com/dracocity/draco-payment-bridge-core/internal/pg"
+import (
+	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
+)
 
 type Plugin interface {
-	New() error
-	Load() error
+	Load(config.PGConfig) error
 	Unload() error
-	GetName() string
+	Name() string
 	PaymentGateway() pg.PaymentGateway
 }
