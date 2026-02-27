@@ -11,14 +11,14 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/dpbc",
             "cwd": "${workspaceFolder}",
-            // "args": [
-            //     "--config",
-            //     "${workspaceFolder}/config.toml.sample"
-            // ],
-            "env": {
-                "DPBC_PLUGIN_DIR": "./dist/debug/plugins",
-                "NOWPAYMENTS_API_KEY": "NOWPAYMENTS_API_KEY"
-            },
+            "args": [
+                "--config",
+                "${workspaceFolder}/.vscode/tmp/config.toml"
+            ],
+            // "env": {
+            //     "DPBC_PLUGIN_DIR": "./dist/debug/plugins",
+            //     "NOWPAYMENTS_API_KEY": "NOWPAYMENTS_API_KEY"
+            // },
             "preLaunchTask": "build-plugins-debug"
         }
     ]

@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dracocity/draco-payment-bridge-core/internal/config"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
@@ -26,11 +27,7 @@ func New() plugin.Plugin {
 	return &coinpaymentsPlugin{}
 }
 
-func (p *coinpaymentsPlugin) New() error {
-	return nil
-}
-
-func (p *coinpaymentsPlugin) Load() error {
+func (p *coinpaymentsPlugin) Load(cfg config.PGConfig) error {
 	p.publicKey = os.Getenv("COINPAYMENTS_PUBLIC_KEY")
 	p.privateKey = os.Getenv("COINPAYMENTS_PRIVATE_KEY")
 	p.pg = &coinpaymentsPG{publicKey: p.publicKey, privateKey: p.privateKey}
@@ -41,7 +38,7 @@ func (p *coinpaymentsPlugin) Unload() error {
 	return nil
 }
 
-func (p *coinpaymentsPlugin) GetName() string {
+func (p *coinpaymentsPlugin) Name() string {
 	return "coinpayments"
 }
 
@@ -53,28 +50,30 @@ func (b *coinpaymentsPG) Name() string {
 	return "coinpayments"
 }
 
+func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
+	return nil, nil
+}
+
 func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	paymentID := fmt.Sprintf("cp-%d", time.Now().UnixNano())
+	createdAt := time.Now().UnixMilli()
+	expiresAt := createdAt + 1800000 // 30 minutes
 	return &models.CreatePaymentResponse{
-		Success:    true,
-		PaymentID:  paymentID,
-		PaymentURL: "https://www.coinpayments.net/index.php?cmd=_pay&reset=1&id=" + paymentID,
-		QRCode:     "",
-		Amount:     formatAmount(req.Amount),
-		Currency:   req.Currency,
-		Status:     "new",
-		ExpiresAt:  time.Now().Add(30 * time.Minute),
+		Amount:    req.Amount,
+		Currency:  req.Currency,
+		Status:    "new",
+		CreatedAt: createdAt,
+		ExpiresAt: expiresAt,
 	}, nil
 }
 
-func (b *coinpaymentsPG) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
-	return &models.PaymentStatusResponse{
-		PaymentID:   paymentID,
-		Status:      "pending",
-		Amount:      "",
-		Currency:    "",
-		Transaction: "",
-		UpdatedAt:   time.Now(),
+func (b *coinpaymentsPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
+	return &models.GetPaymentResponse{
+		PaymentID: paymentID,
+		Status:    "pending",
+		Amount:    "",
+		Currency:  "",
+		// Transaction: "",
+		UpdatedAt: time.Now().UnixMilli(),
 	}, nil
 }
 

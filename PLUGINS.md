@@ -51,8 +51,6 @@ type sampleBridge struct{}
 
 func New() plugin.Plugin { return &samplePlugin{} }
 
-func (p *samplePlugin) New() error { return nil }
-
 func (p *samplePlugin) Load() error {
     p.apiKey = os.Getenv("SAMPLE_API_KEY")
     p.bridge = &sampleBridge{}

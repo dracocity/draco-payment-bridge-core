@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dracocity/draco-payment-bridge-core/internal/config"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
@@ -24,11 +25,7 @@ func New() plugin.Plugin {
 	return &bitpayPlugin{}
 }
 
-func (p *bitpayPlugin) New() error {
-	return nil
-}
-
-func (p *bitpayPlugin) Load() error {
+func (p *bitpayPlugin) Load(cfg config.PGConfig) error {
 	p.apiKey = os.Getenv("BITPAY_API_KEY")
 	p.pg = &bitpayPG{apiKey: p.apiKey}
 	return nil
@@ -38,7 +35,7 @@ func (p *bitpayPlugin) Unload() error {
 	return nil
 }
 
-func (p *bitpayPlugin) GetName() string {
+func (p *bitpayPlugin) Name() string {
 	return "bitpay"
 }
 
@@ -50,28 +47,31 @@ func (b *bitpayPG) Name() string {
 	return "bitpay"
 }
 
+func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
+	return nil, nil
+}
+
 func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	paymentID := fmt.Sprintf("bp-%d", time.Now().UnixNano())
+	// paymentID := fmt.Sprintf("bp-%d", time.Now().UnixNano())
 	return &models.CreatePaymentResponse{
-		Success:    true,
-		PaymentID:  paymentID,
-		PaymentURL: "https://bitpay.com/invoice?id=" + paymentID,
-		QRCode:     "",
-		Amount:     formatAmount(req.Amount),
-		Currency:   req.Currency,
-		Status:     "new",
-		ExpiresAt:  time.Now().Add(30 * time.Minute),
+		// PaymentID: paymentID,
+		// PaymentURL: "https://bitpay.com/invoice?id=" + paymentID,
+		// QRCode:     "",
+		// Amount:     req.Amount,
+		// Currency:   req.Currency,
+		// Status:     "new",
+		// ExpiresAt:  time.Now().Add(30 * time.Minute),
 	}, nil
 }
 
-func (b *bitpayPG) GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error) {
-	return &models.PaymentStatusResponse{
-		PaymentID:   paymentID,
-		Status:      "pending",
-		Amount:      "",
-		Currency:    "",
-		Transaction: "",
-		UpdatedAt:   time.Now(),
+func (b *bitpayPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
+	return &models.GetPaymentResponse{
+		PaymentID: paymentID,
+		Status:    "pending",
+		Amount:    "",
+		Currency:  "",
+		// Transaction: "",
+		UpdatedAt: time.Now().UnixMilli(),
 	}, nil
 }
 

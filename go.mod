@@ -8,6 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pelletier/go-toml/v2 v2.2.4
+	github.com/shopspring/decimal v1.4.0
 	github.com/urfave/cli/v2 v2.27.7
 	go.uber.org/zap v1.27.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

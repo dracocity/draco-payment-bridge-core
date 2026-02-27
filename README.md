@@ -1,6 +1,6 @@
 # Payment Bridge Server
 
-다중 결제 제공자(NOWPayments, Coinbase Commerce, BitPay, CoinGate, CoinPayments)를 통합하는 Go 서버입니다.
+다중 결제 제공자(NOWPayments, BitPay, CoinGate, CoinPayments)를 통합하는 Go 서버입니다.
 
 ## 기능
 
@@ -14,7 +14,6 @@
 ## 지원 제공자
 
 1. **NOWPayments** - 다양한 암호화폐 결제
-2. **Coinbase Commerce** - 코인베이스 상점 결제
 3. **BitPay** - 비트코인 결제 처리
 4. **CoinGate** - 암호화폐 결제 게이트웨이
 5. **CoinPayments** - 글로벌 암호화폐 결제
@@ -45,7 +44,6 @@ scripts\build-plugins.bat
 또는 개별 플러그인 빌드:
 ```bash
 go build -buildmode=plugin -o plugins/dist/nowpayments.so plugins/src/nowpayments
-go build -buildmode=plugin -o plugins/dist/coinbasecommerce.so plugins/src/coinbasecommerce
 go build -buildmode=plugin -o plugins/dist/bitpay.so plugins/src/bitpay
 go build -buildmode=plugin -o plugins/dist/coingate.so plugins/src/coingate
 go build -buildmode=plugin -o plugins/dist/coinpayments.so plugins/src/coinpayments
@@ -62,9 +60,6 @@ PLUGIN_DIR=./plugins/dist
 
 # NOWPayments
 NOWPAYMENTS_API_KEY=your_api_key
-
-# Coinbase Commerce
-COINBASE_COMMERCE_API_KEY=your_api_key
 
 # BitPay
 BITPAY_API_KEY=your_api_key
@@ -104,7 +99,7 @@ GET /health
 ```json
 {
   "status": "ok",
-  "providers": ["nowpayments", "coinbasecommerce", "bitpay", "coingate", "coinpayments"]
+  "providers": ["nowpayments", "bitpay", "coingate", "coinpayments"]
 }
 ```
 
@@ -229,8 +224,6 @@ draco-payment-bridge-core/
 │   ├── src/         # 플러그인 소스 코드
 │   │   ├── nowpayments/
 │   │   │   └── nowpayments.go
-│   │   ├── coinbasecommerce/
-│   │   │   └── coinbasecommerce.go
 │   │   ├── bitpay/
 │   │   │   └── bitpay.go
 │   │   ├── coingate/
@@ -263,7 +256,7 @@ cp new-plugin.so plugins/dist/
 **플러그인 제거:**
 ```bash
 # 플러그인 파일 삭제
-rm plugins/dist/coinbasecommerce.so
+rm plugins/dist/nowpayments.so
 ```
 
 애플리케이션 재시작 시 변경사항이 적용됩니다.
