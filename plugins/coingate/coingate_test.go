@@ -32,12 +32,12 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 	}
 	defer logger.Sync()
 
-	pgCfg, ok := cfg.Providers["bitpay"]
+	pgCfg, ok := cfg.Providers["coingate"]
 	if !ok {
 		t.Fatal("bitpay config was not loaded from file")
 	}
 
-	p := &bitpayPlugin{}
+	p := &coingatePlugin{}
 	if err := p.Load(pgCfg); err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 		OrderID:      "SAMPLE",
 		FiatAmount:   "3.21",
 		FiatCurrency: "USD",
-		WebhookURL:   "https://local.draco.city/api/v1/providers/bitpay/webhooks",
+		WebhookURL:   "https://local.draco.city/api/v1/providers/coingate/webhooks",
 	})
 	if err != nil {
 		t.Fatalf("CreatePaymentLink returned error: %v", err)

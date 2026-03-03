@@ -15,3 +15,20 @@ enabled = false
 max_size = 100 # MB unit
 max_age = 7 # day
 compress = true # gzip compression
+
+[providers.nowpayments]
+mode = "sandbox" # 
+api_key = "NOWPAYMENTS-API-KEY"
+ipn_secret = "NOWPAYMENTS-IPN-SECRET"
+http_timeout = "20s"
+
+[providers.bitpay]
+mode = "sandbox"
+api_token = "BITPAY-API-TOKEN"
+http_timeout = "20s"
+
+[providers.coingate]
+mode = "sandbox"
+api_token = "COINGATE-API-TOKEN"
+callback_token = "COINGATE-CALLBACK-TOKEN"
+http_timeout = "20s"

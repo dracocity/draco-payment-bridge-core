@@ -2,23 +2,32 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
+const (
+	prodBaseURL    = "https://api.coingate.com/v2"
+	sandboxBaseURL = "https://api-sandbox.coingate.com/v2"
+)
+
 type coingatePlugin struct {
-	apiKey string
-	pg     *coingatePG
+	pg *coingatePG
 }
 
 type coingatePG struct {
-	apiKey string
+	client        *httpx.Client
+	callbackToken string
 }
 
 func New() plugin.Plugin {
@@ -26,8 +35,45 @@ func New() plugin.Plugin {
 }
 
 func (p *coingatePlugin) Load(cfg config.PGConfig) error {
-	p.apiKey = os.Getenv("COINGATE_API_TOKEN")
-	p.pg = &coingatePG{apiKey: p.apiKey}
+	var baseURL string
+	switch strings.ToLower(cfg["mode"]) {
+	case "sandbox":
+		baseURL = sandboxBaseURL
+	case "production":
+		baseURL = prodBaseURL
+	default:
+		return fmt.Errorf("invalid mode: %s", cfg["mode"])
+	}
+	apiToken := strings.TrimSpace(cfg["api_token"])
+	if apiToken == "" {
+		return errors.New("coingate api_token is required")
+	}
+	callbackToken := strings.TrimSpace(cfg["callback_token"])
+	if callbackToken == "" {
+		return errors.New("coingate callback_token is required")
+	}
+	timeout := 7 * time.Second
+	if timeoutStr := strings.TrimSpace(cfg["http_timeout"]); timeoutStr != "" {
+		parsedTimeout, err := time.ParseDuration(timeoutStr)
+		if err != nil {
+			return fmt.Errorf("invalid http_timeout: %w", err)
+		}
+		timeout = parsedTimeout
+	}
+
+	p.pg = &coingatePG{
+		client: httpx.New(httpx.ClientOptions{
+			Client:  &http.Client{Timeout: timeout},
+			BaseURL: baseURL,
+			Headers: map[string]string{
+				"Content-Type":  "application/json",
+				"Accept":        "application/json",
+				"Authorization": "Token " + apiToken,
+			},
+			ErrorPrefix: "coingate",
+		}),
+		callbackToken: callbackToken,
+	}
 	return nil
 }
 
@@ -48,51 +94,44 @@ func (b *coingatePG) Name() string {
 }
 
 func (b *coingatePG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	return nil, nil
+	body, err := buildCreateOrderRequest(req, b.callbackToken)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp createOrderResponse
+	if err := b.client.Post(ctx, "/orders", nil, body, &resp); err != nil {
+		return nil, err
+	}
+
+	orderID := req.OrderID
+	if resp.OrderID != "" {
+		orderID = resp.OrderID
+	}
+
+	createdAt := toUnixMilli(resp.CreatedAt)
+	return &models.CreatePaymentLinkResponse{
+		InvoiceID:    strconv.FormatInt(resp.ID, 10),
+		OrderID:      orderID,
+		FiatAmount:   resp.PriceAmount,
+		FiatCurrency: strings.ToUpper(resp.PriceCurrency),
+		CheckoutURL:  resp.PaymentURL,
+		CreatedAt:    createdAt,
+		UpdatedAt:    createdAt,
+		Raw:          resp,
+	}, nil
 }
 
 func (b *coingatePG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	// paymentID := fmt.Sprintf("cg-%d", time.Now().UnixNano())
-	createdAt := time.Now().UnixMilli()
-	expiresAt := createdAt + 1800000 // 30 minutes
-	return &models.CreatePaymentResponse{
-		// PaymentID:  paymentID,
-		// PaymentURL: "https://coingate.com/pay/" + paymentID,
-		Amount:    req.Amount,
-		Currency:  req.Currency,
-		Status:    "new",
-		CreatedAt: createdAt,
-		ExpiresAt: expiresAt,
-	}, nil
+	return &models.CreatePaymentResponse{}, nil
 }
 
 func (b *coingatePG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
-	return &models.GetPaymentResponse{
-		PaymentID: paymentID,
-		Status:    "pending",
-		Amount:    "",
-		Currency:  "",
-		// Transaction: "",
-		UpdatedAt: time.Now().UnixMilli(),
-	}, nil
+	return &models.GetPaymentResponse{}, nil
 }
 
 func (b *coingatePG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	refundType := "full"
-	amount := ""
-	if req.Amount > 0 {
-		refundType = "partial"
-		amount = formatAmount(req.Amount)
-	}
-	return &models.RefundResponse{
-		Success:    true,
-		RefundID:   fmt.Sprintf("cg-refund-%d", time.Now().UnixNano()),
-		PaymentID:  req.PaymentID,
-		Amount:     amount,
-		Currency:   "",
-		Status:     "pending",
-		RefundType: refundType,
-	}, nil
+	return &models.RefundResponse{}, nil
 }
 
 func (b *coingatePG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
@@ -102,6 +141,14 @@ func (b *coingatePG) HandleWebhook(ctx context.Context, payload []byte, headers 
 	}, nil
 }
 
-func formatAmount(amount float64) string {
-	return fmt.Sprintf("%.2f", amount)
+func toUnixMilli(datetime string) int64 {
+	if datetime == "" {
+		return 0
+	}
+
+	if ts, err := time.Parse(time.RFC3339, datetime); err == nil {
+		return ts.UnixMilli()
+	}
+
+	return 0
 }

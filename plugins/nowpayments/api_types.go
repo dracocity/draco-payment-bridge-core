@@ -11,22 +11,20 @@ import (
 
 // CreateInvoice
 type createInvoiceRequest struct {
+	createInvoicePayload
 	PriceAmount      float64 `json:"price_amount"`
 	PriceCurrency    string  `json:"price_currency"`
-	PayCurrency      string  `json:"pay_currency,omitempty"`
 	OrderID          string  `json:"order_id,omitempty"`
 	OrderDescription string  `json:"order_description,omitempty"`
 	IPNCallbackURL   string  `json:"ipn_callback_url,omitempty"`
 	SuccessURL       string  `json:"success_url,omitempty"`
 	CancelURL        string  `json:"cancel_url,omitempty"`
-	IsFixedRate      *bool   `json:"is_fixed_rate,omitempty"`
-	IsFeePaidByUser  *bool   `json:"is_fee_paid_by_user,omitempty"`
 }
 
 type createInvoicePayload struct {
-	PayCurrency     string `json:"pay_currency"`
-	IsFixedRate     *bool  `json:"is_fixed_rate"`
-	IsFeePaidByUser *bool  `json:"is_fee_paid_by_user"`
+	PayCurrency     string `json:"pay_currency,omitempty"`
+	IsFixedRate     *bool  `json:"is_fixed_rate,omitempty"`
+	IsFeePaidByUser *bool  `json:"is_fee_paid_by_user,omitempty"`
 }
 
 type createInvoiceResponse struct {
@@ -51,6 +49,7 @@ type createInvoiceResponse struct {
 
 // CreateInvoicePayment
 type createInvoicePaymentRequest struct {
+	createInvoicePaymentPayload
 	InvoiceID        string `json:"iid"`                         // invoice id. You can get invoice ID in response of POST Create_invoice method
 	PayCurrency      string `json:"pay_currency"`                // the crypto currency in which the pay_amount is specified (btc, eth, etc). NOTE: some of the currencies require a Memo, Destination Tag, etc., to complete a payment (AVA, EOS, BNBMAINNET, XLM, XRP). This is unique for each payment. This ID is received in “payin_extra_id” parameter of the response. Payments made without "payin_extra_id" cannot be detected automatically;=
 	OrderDescription string `json:"order_description,omitempty"` // inner store order description

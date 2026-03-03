@@ -9,13 +9,13 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
 
-func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (createInvoiceRequest, error) {
+func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (*createInvoiceRequest, error) {
 	priceAmount, err := strconv.ParseFloat(strings.TrimSpace(req.FiatAmount), 64)
 	if err != nil {
-		return createInvoiceRequest{}, fmt.Errorf("invalid fiat_amount: %w", err)
+		return nil, fmt.Errorf("invalid fiat_amount: %w", err)
 	}
 
-	r := createInvoiceRequest{
+	r := &createInvoiceRequest{
 		PriceAmount:      priceAmount,
 		PriceCurrency:    strings.ToLower(strings.TrimSpace(req.FiatCurrency)),
 		OrderID:          strings.TrimSpace(req.OrderID),
@@ -28,7 +28,7 @@ func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (createInvoi
 	if len(req.ProviderPayload) > 0 {
 		var payload createInvoicePayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
-			return createInvoiceRequest{}, fmt.Errorf("invalid provider_payload: %w", err)
+			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
 		r.PayCurrency = payload.PayCurrency
 		r.IsFixedRate = payload.IsFixedRate
@@ -38,16 +38,16 @@ func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (createInvoi
 	return r, nil
 }
 
-func buildCreateInvoicePaymentRequest(req models.CreatePaymentRequest) (createInvoicePaymentRequest, error) {
+func buildCreateInvoicePaymentRequest(req models.CreatePaymentRequest) (*createInvoicePaymentRequest, error) {
 
-	r := createInvoicePaymentRequest{
+	r := &createInvoicePaymentRequest{
 		InvoiceID: req.InvoiceID,
 	}
 
 	if len(req.ProviderPayload) > 0 {
 		var payload createInvoicePaymentPayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
-			return createInvoicePaymentRequest{}, fmt.Errorf("invalid provider_payload: %w", err)
+			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
 	}
 

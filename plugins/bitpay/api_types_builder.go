@@ -9,13 +9,13 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
 
-func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest, apiToken string) (createInvoiceRequest, error) {
+func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest, apiToken string) (*createInvoiceRequest, error) {
 	price, err := strconv.ParseFloat(strings.TrimSpace(req.FiatAmount), 64)
 	if err != nil {
-		return createInvoiceRequest{}, fmt.Errorf("invalid fiat_amount: %w", err)
+		return nil, fmt.Errorf("invalid fiat_amount: %w", err)
 	}
 
-	r := createInvoiceRequest{
+	r := &createInvoiceRequest{
 		Token:           apiToken,
 		Price:           price,
 		Currency:        strings.ToLower(strings.TrimSpace(req.FiatCurrency)),
@@ -29,7 +29,7 @@ func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest, apiToken str
 	if len(req.ProviderPayload) > 0 {
 		var payload createInvoicePayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
-			return createInvoiceRequest{}, fmt.Errorf("invalid provider_payload: %w", err)
+			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
 		r.BitpayIdRequired = payload.BitpayIdRequired
 		r.MerchantName = payload.MerchantName

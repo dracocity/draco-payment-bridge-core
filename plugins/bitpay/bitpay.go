@@ -62,7 +62,7 @@ func (p *bitpayPlugin) Load(cfg config.PGConfig) error {
 			Headers: map[string]string{
 				"Content-Type":     "application/json",
 				"X-Accept-Version": "2.0.0",
-				"accept":           "application/json",
+				"Accept":           "application/json",
 			},
 			ErrorPrefix: "bitpay",
 		}),
@@ -111,45 +111,15 @@ func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePayme
 }
 
 func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	// paymentID := fmt.Sprintf("bp-%d", time.Now().UnixNano())
-	return &models.CreatePaymentResponse{
-		// PaymentID: paymentID,
-		// PaymentURL: "https://bitpay.com/invoice?id=" + paymentID,
-		// QRCode:     "",
-		// Amount:     req.Amount,
-		// Currency:   req.Currency,
-		// Status:     "new",
-		// ExpiresAt:  time.Now().Add(30 * time.Minute),
-	}, nil
+	return &models.CreatePaymentResponse{}, nil
 }
 
 func (b *bitpayPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
-	return &models.GetPaymentResponse{
-		PaymentID: paymentID,
-		Status:    "pending",
-		Amount:    "",
-		Currency:  "",
-		// Transaction: "",
-		UpdatedAt: time.Now().UnixMilli(),
-	}, nil
+	return &models.GetPaymentResponse{}, nil
 }
 
 func (b *bitpayPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	refundType := "full"
-	amount := ""
-	if req.Amount > 0 {
-		refundType = "partial"
-		amount = formatAmount(req.Amount)
-	}
-	return &models.RefundResponse{
-		Success:    true,
-		RefundID:   fmt.Sprintf("bp-refund-%d", time.Now().UnixNano()),
-		PaymentID:  req.PaymentID,
-		Amount:     amount,
-		Currency:   "",
-		Status:     "pending",
-		RefundType: refundType,
-	}, nil
+	return &models.RefundResponse{}, nil
 }
 
 func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
@@ -157,8 +127,4 @@ func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, headers ma
 		Accepted: true,
 		Message:  "webhook received",
 	}, nil
-}
-
-func formatAmount(amount float64) string {
-	return fmt.Sprintf("%.2f", amount)
 }
