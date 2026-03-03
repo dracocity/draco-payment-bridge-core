@@ -62,7 +62,7 @@ PLUGIN_DIR=./plugins/dist
 NOWPAYMENTS_API_KEY=your_api_key
 
 # BitPay
-BITPAY_API_KEY=your_api_key
+BITPAY_API_TOKEN=your_api_token
 
 # CoinGate
 COINGATE_API_TOKEN=your_api_token

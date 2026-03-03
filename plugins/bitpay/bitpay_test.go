@@ -18,7 +18,7 @@ func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return f(r)
 }
 
-func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
+func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	t.Parallel()
 
 	cfgPath := "../../.vscode/tmp/config.toml"
@@ -32,39 +32,21 @@ func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	}
 	defer logger.Sync()
 
-	pgCfg, ok := cfg.Providers["nowpayments"]
+	pgCfg, ok := cfg.Providers["bitpay"]
 	if !ok {
-		t.Fatal("nowpayments config was not loaded from file")
+		t.Fatal("bitpay config was not loaded from file")
 	}
 
-	p := &nowPaymentsPlugin{}
+	p := &bitpayPlugin{}
 	if err := p.Load(pgCfg); err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
 
-	// var gotURL string
-	// p.pg.client = &http.Client{
-	// 	Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
-	// 		gotURL = r.URL.String()
-	// 		return &http.Response{
-	// 			StatusCode: http.StatusOK,
-	// 			Header:     make(http.Header),
-	// 			Body: io.NopCloser(strings.NewReader(`{
-	// 				"payment_id":"sandbox_1",
-	// 				"price_amount":"3.21",
-	// 				"price_currency":"usd",
-	// 				"payment_status":"waiting"
-	// 			}`)),
-	// 		}, nil
-	// 	}),
-	// }
-
 	resp, err := p.pg.CreatePaymentLink(context.Background(), models.CreatePaymentLinkRequest{
-		OrderID:        "SAMPLE",
-		FiatAmount:     "3.21",
-		FiatCurrency:   "USD",
-		CryptoCurrency: "BTC",
-		WebhookURL:     "https://local.draco.city/api/v1/providers/nowpayments/webhooks",
+		OrderID:      "SAMPLE",
+		FiatAmount:   "3.21",
+		FiatCurrency: "USD",
+		WebhookURL:   "https://local.draco.city/api/v1/providers/bitpay/webhooks",
 	})
 	if err != nil {
 		t.Fatalf("CreatePaymentLink returned error: %v", err)
@@ -87,12 +69,12 @@ func TestGetPayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	}
 	defer logger.Sync()
 
-	pgCfg, ok := cfg.Providers["nowpayments"]
+	pgCfg, ok := cfg.Providers["bitpay"]
 	if !ok {
-		t.Fatal("nowpayments config was not loaded from file")
+		t.Fatal("bitpay config was not loaded from file")
 	}
 
-	p := &nowPaymentsPlugin{}
+	p := &bitpayPlugin{}
 	if err := p.Load(pgCfg); err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}

@@ -2,23 +2,31 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
+const (
+	prodBaseURL    = "https://bitpay.com"
+	sandboxBaseURL = "https://test.bitpay.com"
+)
+
 type bitpayPlugin struct {
-	apiKey string
-	pg     *bitpayPG
+	pg *bitpayPG
 }
 
 type bitpayPG struct {
-	apiKey string
+	client   *httpx.Client
+	apiToken string
 }
 
 func New() plugin.Plugin {
@@ -26,8 +34,40 @@ func New() plugin.Plugin {
 }
 
 func (p *bitpayPlugin) Load(cfg config.PGConfig) error {
-	p.apiKey = os.Getenv("BITPAY_API_KEY")
-	p.pg = &bitpayPG{apiKey: p.apiKey}
+	var baseURL string
+	switch strings.ToLower(cfg["mode"]) {
+	case "sandbox":
+		baseURL = sandboxBaseURL
+	case "production":
+		baseURL = prodBaseURL
+	default:
+		return fmt.Errorf("invalid mode: %s", cfg["mode"])
+	}
+	apiToken := strings.TrimSpace(cfg["api_token"])
+	if apiToken == "" {
+		return errors.New("bitpay api_token is required")
+	}
+	timeout := 7 * time.Second
+	if timeoutStr := strings.TrimSpace(cfg["http_timeout"]); timeoutStr != "" {
+		parsedTimeout, err := time.ParseDuration(timeoutStr)
+		if err != nil {
+			return fmt.Errorf("invalid http_timeout: %w", err)
+		}
+		timeout = parsedTimeout
+	}
+	p.pg = &bitpayPG{
+		client: httpx.New(httpx.ClientOptions{
+			Client:  &http.Client{Timeout: timeout},
+			BaseURL: baseURL,
+			Headers: map[string]string{
+				"Content-Type":     "application/json",
+				"X-Accept-Version": "2.0.0",
+				"accept":           "application/json",
+			},
+			ErrorPrefix: "bitpay",
+		}),
+		apiToken: apiToken,
+	}
 	return nil
 }
 
@@ -48,7 +88,26 @@ func (b *bitpayPG) Name() string {
 }
 
 func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	return nil, nil
+	body, err := buildCreateInvoiceRequest(req, b.apiToken)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp createInvoiceResponse
+	if err := b.client.Post(ctx, "/invoices", nil, body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &models.CreatePaymentLinkResponse{
+		InvoiceID:    resp.Data.ID,
+		OrderID:      resp.Data.OrderID,
+		FiatAmount:   resp.Data.DisplayAmountPaid,
+		FiatCurrency: resp.Data.Currency,
+		CheckoutURL:  resp.Data.RedirectURL,
+		CreatedAt:    resp.Data.InvoiceTime,
+		UpdatedAt:    resp.Data.InvoiceTime,
+		Raw:          resp,
+	}, nil
 }
 
 func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {

@@ -7,18 +7,16 @@ import (
 )
 
 type CreatePaymentLinkRequest struct {
-	OrderID     string  `json:"order_id"`
-	Description *string `json:"description,omitempty"` // order/item description
+	OrderID     string `json:"order_id"`
+	Description string `json:"description,omitempty"` // order/item description
 
-	FiatAmount     string  `json:"fiat_amount"`               // decimal string (e.g. "1000")
-	FiatCurrency   string  `json:"fiat_currency"`             // price currency (e.g. "USD")
-	CryptoCurrency *string `json:"crypto_currency,omitempty"` // receive/pay currency (e.g. "BTC")
+	FiatAmount     string `json:"fiat_amount"`               // decimal string (e.g. "1000")
+	FiatCurrency   string `json:"fiat_currency"`             // price currency (e.g. "USD")
+	CryptoCurrency string `json:"crypto_currency,omitempty"` // receive/pay currency (e.g. "BTC")
 
-	WebhookURL *string `json:"webhook_url,omitempty"` // ipn/notification/callback url
-	SuccessURL *string `json:"success_url,omitempty"` // redirect url on success
-	CancelURL  *string `json:"cancel_url,omitempty"`  // redirect url on cancel/close
-
-	// TODO checkoutMode *string `json:"checkout_mode,omitempty"` // TODO: HOSTED | SELF_HOSTED
+	WebhookURL string `json:"webhook_url,omitempty"` // ipn/notification/callback url
+	SuccessURL string `json:"success_url,omitempty"` // redirect url on success
+	CancelURL  string `json:"cancel_url,omitempty"`  // redirect url on cancel/close
 
 	ProviderPayload json.RawMessage `json:"provider_payload,omitempty"`
 }

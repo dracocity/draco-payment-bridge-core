@@ -108,9 +108,6 @@ func (c *Client) Do(ctx context.Context, opts RequestOptions, out any) error {
 	for key, value := range opts.Headers {
 		req.Header.Set(key, value)
 	}
-	if opts.Body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {

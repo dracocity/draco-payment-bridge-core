@@ -7,6 +7,7 @@ type Config struct {
 	Log       LogConfig           `toml:"log"`
 }
 
+// TODO checkoutMode *string `json:"checkout_mode,omitempty"` // HOSTED | SELF_HOSTED
 type PGConfig map[string]string
 
 type LogConfig struct {

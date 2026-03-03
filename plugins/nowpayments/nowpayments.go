@@ -68,13 +68,16 @@ func (p *nowPaymentsPlugin) Load(cfg config.PGConfig) error {
 		timeout = parsedTimeout
 	}
 	p.pg = &nowPaymentsPG{
-		ipnSecret: ipnSecret,
 		client: httpx.New(httpx.ClientOptions{
-			Client:      &http.Client{Timeout: timeout},
-			BaseURL:     baseURL,
-			Headers:     map[string]string{"x-api-key": apiKey},
+			Client:  &http.Client{Timeout: timeout},
+			BaseURL: baseURL,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+				"x-api-key":    apiKey,
+			},
 			ErrorPrefix: "nowpayments",
 		}),
+		ipnSecret: ipnSecret,
 	}
 	return nil
 }
@@ -96,12 +99,12 @@ func (b *nowPaymentsPG) Name() string {
 }
 
 func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	body, err := buildNowPaymentsCreateInvoiceRequest(req)
+	body, err := buildCreateInvoiceRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp nowPaymentsCreateInvoiceResponse
+	var resp createInvoiceResponse
 	if err := b.client.Post(ctx, "/invoice", nil, body, &resp); err != nil {
 		return nil, err
 	}
@@ -129,12 +132,13 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 }
 
 func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	body, err := buildNowPaymentsCreateInvoicePaymentRequest(req)
+	// TODO
+	body, err := buildCreateInvoicePaymentRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp nowPaymentsCreateInvoicePaymentResponse
+	var resp createInvoicePaymentResponse
 	if err := b.client.Post(ctx, "/invoice-payment", nil, body, &resp); err != nil {
 		return nil, err
 	}
