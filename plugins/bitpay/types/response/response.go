@@ -1,57 +1,9 @@
-package main
+package response
 
 import "github.com/shopspring/decimal"
 
 // CreateInvoice
-type createInvoiceRequest struct {
-	createInvoicePayload
-	Token           string  `json:"token"`
-	Price           float64 `json:"price"`
-	Currency        string  `json:"currency"`
-	OrderID         string  `json:"orderId,omitempty"`
-	ItemDesc        string  `json:"itemDesc,omitempty"`
-	NotificationURL string  `json:"notificationURL,omitempty"`
-	RedirectURL     string  `json:"redirectURL,omitempty"`
-	CloseURL        string  `json:"closeURL,omitempty"`
-}
-
-type createInvoicePayload struct {
-	BitpayIdRequired                       *bool  `json:"bitpayIdRequired"`
-	MerchantName                           string `json:"merchantName,omitempty"`
-	ForcedBuyerSelectedTransactionCurrency string `json:"forcedBuyerSelectedTransactionCurrency,omitempty"`
-	ForcedBuyerSelectedWallet              string `json:"forcedBuyerSelectedWallet,omitempty"`
-	ItemCode                               string `json:"itemCode,omitempty"`
-	ItemizedDetails                        []struct {
-		Amount      string `json:"amount"`
-		Description string `json:"description"`
-		IsFee       bool   `json:"isFee"`
-	} `json:"itemizedDetails,omitempty"`
-	NotificationEmail     string `json:"notificationEmail,omitempty"`
-	AutoRedirect          *bool  `json:"autoRedirect,omitempty"`
-	PosData               string `json:"posData,omitempty"`
-	GUID                  string `json:"guid,omitempty"`
-	TransactionSpeed      string `json:"transactionSpeed,omitempty"`
-	FullNotifications     *bool  `json:"fullNotifications,omitempty"`
-	ExtendedNotifications *bool  `json:"extendedNotifications,omitempty"`
-	Physical              *bool  `json:"physical,omitempty"`
-	BuyerSMS              string `json:"buyerSms,omitempty"`
-	Buyer                 *struct {
-		Name       string `json:"name"`
-		Address1   string `json:"address1"`
-		Address2   string `json:"address2"`
-		Locality   string `json:"locality"`
-		Region     string `json:"region"`
-		PostalCode string `json:"postalCode"`
-		Country    string `json:"country"`
-		Email      string `json:"email"`
-		Phone      string `json:"phone"`
-		Notify     bool   `json:"notify"`
-	} `json:"buyer,omitempty"`
-	JsonPayProRequired string `json:"jsonPayProRequired,omitempty"`
-	AcceptanceWindow   *int32 `json:"acceptanceWindow,omitempty"`
-}
-
-type createInvoiceResponse struct {
+type CreateInvoice struct {
 	Facade string `json:"facade"`
 	Data   struct {
 		URL                 string           `json:"url"`

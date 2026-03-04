@@ -1,6 +1,7 @@
-package main
+package request
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,13 +9,13 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
 
-func buildCreateOrderRequest(req models.CreatePaymentLinkRequest, callbackToken string) (*createOrderRequest, error) {
+func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackToken string) (*CreateOrder, error) {
 	priceAmount, err := strconv.ParseFloat(strings.TrimSpace(req.FiatAmount), 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid fiat_amount: %w", err)
 	}
 
-	return &createOrderRequest{
+	r := &CreateOrder{
 		OrderID:         strings.TrimSpace(req.OrderID),
 		PriceAmount:     priceAmount,
 		PriceCurrency:   strings.ToUpper(strings.TrimSpace(req.FiatCurrency)),
@@ -24,6 +25,14 @@ func buildCreateOrderRequest(req models.CreatePaymentLinkRequest, callbackToken 
 		CallbackURL:     strings.TrimSpace(req.WebhookURL),
 		CancelURL:       strings.TrimSpace(req.CancelURL),
 		SuccessURL:      strings.TrimSpace(req.SuccessURL),
-		Token:           strings.TrimSpace(callbackToken),
-	}, nil
+	}
+	if len(req.ProviderPayload) > 0 {
+		var payload CreateOrderPayload
+		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
+			return nil, fmt.Errorf("invalid provider_payload: %w", err)
+		}
+		r.Token = payload.Token
+	}
+
+	return r, nil
 }

@@ -13,6 +13,8 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
+	"github.com/dracocity/draco-payment-bridge-core/plugins/bitpay/types/request"
+	"github.com/dracocity/draco-payment-bridge-core/plugins/bitpay/types/response"
 )
 
 const (
@@ -88,12 +90,12 @@ func (b *bitpayPG) Name() string {
 }
 
 func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	body, err := buildCreateInvoiceRequest(req, b.apiToken)
+	body, err := request.BuildCreateInvoice(req, b.apiToken)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp createInvoiceResponse
+	var resp response.CreateInvoice
 	if err := b.client.Post(ctx, "/invoices", nil, body, &resp); err != nil {
 		return nil, err
 	}

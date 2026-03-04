@@ -1,4 +1,4 @@
-package main
+package request
 
 import (
 	"encoding/json"
@@ -9,13 +9,13 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
 
-func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (*createInvoiceRequest, error) {
+func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, error) {
 	priceAmount, err := strconv.ParseFloat(strings.TrimSpace(req.FiatAmount), 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid fiat_amount: %w", err)
 	}
 
-	r := &createInvoiceRequest{
+	r := &CreateInvoice{
 		PriceAmount:      priceAmount,
 		PriceCurrency:    strings.ToLower(strings.TrimSpace(req.FiatCurrency)),
 		OrderID:          strings.TrimSpace(req.OrderID),
@@ -26,7 +26,7 @@ func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (*createInvo
 	}
 
 	if len(req.ProviderPayload) > 0 {
-		var payload createInvoicePayload
+		var payload CreateInvoicePayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
 			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
@@ -38,14 +38,14 @@ func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (*createInvo
 	return r, nil
 }
 
-func buildCreateInvoicePaymentRequest(req models.CreatePaymentRequest) (*createInvoicePaymentRequest, error) {
+func BuildCreateInvoicePayment(req models.CreatePaymentRequest) (*CreateInvoicePayment, error) {
 
-	r := &createInvoicePaymentRequest{
+	r := &CreateInvoicePayment{
 		InvoiceID: req.InvoiceID,
 	}
 
 	if len(req.ProviderPayload) > 0 {
-		var payload createInvoicePaymentPayload
+		var payload CreateInvoicePaymentPayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
 			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}

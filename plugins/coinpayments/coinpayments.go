@@ -13,6 +13,8 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
+	"github.com/dracocity/draco-payment-bridge-core/plugins/coinpayments/types/request"
+	"github.com/dracocity/draco-payment-bridge-core/plugins/coinpayments/types/response"
 )
 
 const (
@@ -93,16 +95,16 @@ func (b *coinpaymentsPG) Name() string {
 
 // TODO:
 func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	body, err := buildCreateInvoiceRequest(req)
+	body, err := request.BuildCreateInvoice(req)
 	if err != nil {
 		return nil, err
 	}
-	header, err := buildRequestHeaders(b.clientID, b.clientSecret, "POST", "", body)
+	header, err := request.BuildRequestHeaders(b.clientID, b.clientSecret, "POST", "", body)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp createInvoiceResponse
+	var resp response.CreateInvoice
 	if err := b.client.Post(ctx, "/invoices", header, body, &resp); err != nil {
 		return nil, err
 	}

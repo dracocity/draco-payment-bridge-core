@@ -21,6 +21,8 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 	"github.com/dracocity/draco-payment-bridge-core/internal/types"
+	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/request"
+	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/response"
 )
 
 const (
@@ -99,12 +101,12 @@ func (b *nowPaymentsPG) Name() string {
 }
 
 func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	body, err := buildCreateInvoiceRequest(req)
+	body, err := request.BuildCreateInvoice(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp createInvoiceResponse
+	var resp response.CreateInvoice
 	if err := b.client.Post(ctx, "/invoice", nil, body, &resp); err != nil {
 		return nil, err
 	}
@@ -133,12 +135,12 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 
 func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
 	// TODO
-	body, err := buildCreateInvoicePaymentRequest(req)
+	body, err := request.BuildCreateInvoicePayment(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp createInvoicePaymentResponse
+	var resp response.CreateInvoicePayment
 	if err := b.client.Post(ctx, "/invoice-payment", nil, body, &resp); err != nil {
 		return nil, err
 	}
@@ -179,7 +181,7 @@ func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaym
 }
 
 func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
-	var resp nowPaymentsGetPaymentResponse
+	var resp response.GetPayment
 	if err := b.client.Get(ctx, "/payment/"+paymentID, nil, nil, &resp); err != nil {
 		return nil, err
 	}

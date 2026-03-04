@@ -1,4 +1,4 @@
-package main
+package request
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
 
-func buildRequestHeaders(clientID, clientSecret, method, requestURL string, payload any) (map[string]string, error) {
+func BuildRequestHeaders(clientID, clientSecret, method, requestURL string, payload any) (map[string]string, error) {
 	timestamp := time.Now().UTC().Format(time.RFC3339)
 	signature, err := generateSignature(clientID, clientSecret, timestamp, method, requestURL, payload)
 	if err != nil {
@@ -49,11 +49,11 @@ func generateSignature(clientID, clientSecret, timestamp, method, requestURL str
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil)), nil
 }
 
-func buildCreateInvoiceRequest(req models.CreatePaymentLinkRequest) (*createInvoiceRequest, error) {
-	r := &createInvoiceRequest{}
+func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, error) {
+	r := &CreateInvoice{}
 
 	if len(req.ProviderPayload) > 0 {
-		var payload createInvoicePayload
+		var payload CreateInvoicePayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
 			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
