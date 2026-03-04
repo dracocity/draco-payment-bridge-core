@@ -2,24 +2,32 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
+const (
+	aBaseURL = "https://a-api.coinpayments.net/api/v2/merchant"
+	bBaseURL = "https://a-api.coinpayments.net/api/v2/merchant"
+)
+
 type coinpaymentsPlugin struct {
-	publicKey  string
-	privateKey string
-	pg         *coinpaymentsPG
+	pg *coinpaymentsPG
 }
 
 type coinpaymentsPG struct {
-	publicKey  string
-	privateKey string
+	client       *httpx.Client
+	clientID     string
+	clientSecret string
 }
 
 func New() plugin.Plugin {
@@ -27,9 +35,43 @@ func New() plugin.Plugin {
 }
 
 func (p *coinpaymentsPlugin) Load(cfg config.PGConfig) error {
-	p.publicKey = os.Getenv("COINPAYMENTS_PUBLIC_KEY")
-	p.privateKey = os.Getenv("COINPAYMENTS_PRIVATE_KEY")
-	p.pg = &coinpaymentsPG{publicKey: p.publicKey, privateKey: p.privateKey}
+	var baseURL string
+	switch strings.ToLower(cfg["base_url_type"]) {
+	case "a-base-url":
+		baseURL = aBaseURL
+	case "b-base-url":
+		baseURL = bBaseURL
+	default:
+		return fmt.Errorf("invalid base_url_type: %s", cfg["base_url_type"])
+	}
+	clientID := strings.TrimSpace(cfg["client_id"])
+	if clientID == "" {
+		return errors.New("coinpayments client_id is required")
+	}
+	clientSecret := strings.TrimSpace(cfg["client_secret"])
+	if clientSecret == "" {
+		return errors.New("coinpayments client_secret is required")
+	}
+	timeout := 7 * time.Second
+	if timeoutStr := strings.TrimSpace(cfg["http_timeout"]); timeoutStr != "" {
+		parsedTimeout, err := time.ParseDuration(timeoutStr)
+		if err != nil {
+			return fmt.Errorf("invalid http_timeout: %w", err)
+		}
+		timeout = parsedTimeout
+	}
+	p.pg = &coinpaymentsPG{
+		client: httpx.New(httpx.ClientOptions{
+			Client:  &http.Client{Timeout: timeout},
+			BaseURL: baseURL,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+			ErrorPrefix: "coinpayments",
+		}),
+		clientID:     clientID,
+		clientSecret: clientSecret,
+	}
 	return nil
 }
 
@@ -49,8 +91,32 @@ func (b *coinpaymentsPG) Name() string {
 	return "coinpayments"
 }
 
+// TODO:
 func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	return nil, nil
+	body, err := buildCreateInvoiceRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	header, err := buildRequestHeaders(b.clientID, b.clientSecret, "POST", "", body)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp createInvoiceResponse
+	if err := b.client.Post(ctx, "/invoices", header, body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &models.CreatePaymentLinkResponse{
+		// InvoiceID:    resp.Data.ID,
+		// OrderID:      resp.Data.OrderID,
+		// FiatAmount:   resp.Data.DisplayAmountPaid,
+		// FiatCurrency: resp.Data.Currency,
+		// CheckoutURL:  resp.Data.RedirectURL,
+		// CreatedAt:    resp.Data.InvoiceTime,
+		// UpdatedAt:    resp.Data.InvoiceTime,
+		Raw: resp,
+	}, nil
 }
 
 func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {

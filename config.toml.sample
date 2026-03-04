@@ -17,18 +17,24 @@ max_age = 7 # day
 compress = true # gzip compression
 
 [providers.nowpayments]
-mode = "sandbox" # 
+mode = "sandbox" # production | sandbox
 api_key = "NOWPAYMENTS-API-KEY"
 ipn_secret = "NOWPAYMENTS-IPN-SECRET"
 http_timeout = "20s"
 
 [providers.bitpay]
-mode = "sandbox"
+mode = "sandbox" # production | sandbox
 api_token = "BITPAY-API-TOKEN"
 http_timeout = "20s"
 
 [providers.coingate]
-mode = "sandbox"
+mode = "sandbox" # production | sandbox
 api_token = "COINGATE-API-TOKEN"
 callback_token = "COINGATE-CALLBACK-TOKEN"
+http_timeout = "20s"
+
+[providers.coinpayments]
+base_url_type = "a-base-url" # a-base-url | b-base-url
+client_id = "COINPAYMENTS-CLIENT-ID"
+client_secret = "COINPAYMENTS-CLIENT-SECRET"
 http_timeout = "20s"
