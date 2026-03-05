@@ -43,10 +43,10 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 	}
 
 	resp, err := p.pg.CreatePaymentLink(context.Background(), models.CreatePaymentLinkRequest{
-		OrderID:      "SAMPLE",
-		FiatAmount:   "3.21",
-		FiatCurrency: "USD",
-		WebhookURL:   "https://local.draco.city/api/v1/providers/coingate/webhooks",
+		OrderID:    "SAMPLE",
+		Amount:     "3.21",
+		Currency:   "USD",
+		WebhookURL: "https://local.draco.city/api/v1/providers/coingate/webhooks",
 	})
 	if err != nil {
 		t.Fatalf("CreatePaymentLink returned error: %v", err)

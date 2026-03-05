@@ -122,14 +122,14 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 		updatedAt = createdAt
 	}
 	return &models.CreatePaymentLinkResponse{
-		InvoiceID:    resp.ID,
-		OrderID:      orderID,
-		FiatAmount:   resp.PriceAmount.String(),
-		FiatCurrency: resp.PriceCurrency,
-		CheckoutURL:  resp.InvoiceURL,
-		CreatedAt:    createdAt,
-		UpdatedAt:    updatedAt,
-		Raw:          resp,
+		InvoiceID:   resp.ID,
+		OrderID:     orderID,
+		Amount:      resp.PriceAmount.String(),
+		Currency:    resp.PriceCurrency,
+		CheckoutURL: resp.InvoiceURL,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
+		Raw:         resp,
 	}, nil
 }
 

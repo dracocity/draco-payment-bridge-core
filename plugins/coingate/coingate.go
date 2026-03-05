@@ -113,14 +113,14 @@ func (b *coingatePG) CreatePaymentLink(ctx context.Context, req models.CreatePay
 
 	createdAt := toUnixMilli(resp.CreatedAt)
 	return &models.CreatePaymentLinkResponse{
-		InvoiceID:    strconv.FormatInt(resp.ID, 10),
-		OrderID:      orderID,
-		FiatAmount:   resp.PriceAmount,
-		FiatCurrency: strings.ToUpper(resp.PriceCurrency),
-		CheckoutURL:  resp.PaymentURL,
-		CreatedAt:    createdAt,
-		UpdatedAt:    createdAt,
-		Raw:          resp,
+		InvoiceID:   strconv.FormatInt(resp.ID, 10),
+		OrderID:     orderID,
+		Amount:      resp.PriceAmount,
+		Currency:    strings.ToUpper(resp.PriceCurrency),
+		CheckoutURL: resp.PaymentURL,
+		CreatedAt:   createdAt,
+		UpdatedAt:   createdAt,
+		Raw:         resp,
 	}, nil
 }
 

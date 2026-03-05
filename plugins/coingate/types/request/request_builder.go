@@ -10,16 +10,16 @@ import (
 )
 
 func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackToken string) (*CreateOrder, error) {
-	priceAmount, err := strconv.ParseFloat(strings.TrimSpace(req.FiatAmount), 64)
+	priceAmount, err := strconv.ParseFloat(strings.TrimSpace(req.Amount), 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid fiat_amount: %w", err)
+		return nil, fmt.Errorf("invalid amount: %w", err)
 	}
 
 	r := &CreateOrder{
 		OrderID:         strings.TrimSpace(req.OrderID),
 		PriceAmount:     priceAmount,
-		PriceCurrency:   strings.ToUpper(strings.TrimSpace(req.FiatCurrency)),
-		ReceiveCurrency: strings.ToUpper(strings.TrimSpace(req.CryptoCurrency)),
+		PriceCurrency:   strings.ToUpper(strings.TrimSpace(req.Currency)),
+		ReceiveCurrency: strings.ToUpper(strings.TrimSpace(req.ReceiveCurrency)),
 		Title:           strings.TrimSpace(req.Description), // TODO: Title
 		Description:     strings.TrimSpace(req.Description), // TODO: Description
 		CallbackURL:     strings.TrimSpace(req.WebhookURL),

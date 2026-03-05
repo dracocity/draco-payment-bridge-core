@@ -10,7 +10,7 @@ import (
 )
 
 func BuildCreateInvoice(req models.CreatePaymentLinkRequest, apiToken string) (*CreateInvoice, error) {
-	price, err := strconv.ParseFloat(strings.TrimSpace(req.FiatAmount), 64)
+	price, err := strconv.ParseFloat(strings.TrimSpace(req.Amount), 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid fiat_amount: %w", err)
 	}
@@ -18,7 +18,7 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest, apiToken string) (*
 	r := &CreateInvoice{
 		Token:           apiToken,
 		Price:           price,
-		Currency:        strings.ToLower(strings.TrimSpace(req.FiatCurrency)),
+		Currency:        strings.ToLower(strings.TrimSpace(req.Currency)),
 		OrderID:         strings.TrimSpace(req.OrderID),
 		ItemDesc:        strings.TrimSpace(req.Description),
 		NotificationURL: strings.TrimSpace(req.WebhookURL),
