@@ -1,23 +1,32 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
-	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
-// PaymentHandler provides HTTP handlers for the payment API.
-type PaymentHandler struct {
-	paymentService *services.PaymentService
+type PaymentService interface {
+	Providers() []string
+	CreatePaymentLink(ctx context.Context, provider string, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error)
+	CreatePayment(ctx context.Context, provider string, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error)
+	GetPayment(ctx context.Context, provider, paymentID string) (*models.GetPaymentResponse, error)
+	Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error)
+	HandleWebhook(ctx context.Context, provider string, payload []byte, headers map[string][]string) (*models.WebhookResult, error)
 }
 
-func New(pgRegistry *pg.Registry) *PaymentHandler {
+// PaymentHandler provides HTTP handlers for the payment API.
+type PaymentHandler struct {
+	paymentService PaymentService
+}
+
+func New(paymentService PaymentService) *PaymentHandler {
 	return &PaymentHandler{
-		paymentService: services.NewPaymentService(pgRegistry),
+		paymentService: paymentService,
 	}
 }
 

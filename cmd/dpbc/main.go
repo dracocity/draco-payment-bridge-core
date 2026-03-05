@@ -14,6 +14,7 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
+	"github.com/dracocity/draco-payment-bridge-core/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
 )
@@ -75,7 +76,8 @@ func run(ctx *cli.Context) error {
 
 	router := gin.New()
 	router.Use(gin.Recovery())
-	handler := handlers.New(pgRegistry)
+	paymentService := services.NewPaymentService(pgRegistry)
+	handler := handlers.New(paymentService)
 	handler.RegisterRoutes(router)
 
 	server := &http.Server{
