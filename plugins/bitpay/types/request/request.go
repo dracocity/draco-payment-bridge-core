@@ -12,9 +12,8 @@ type CreateInvoice struct {
 	RedirectURL     string  `json:"redirectURL,omitempty"`     // The shopper will be redirected to this URL when clicking on the Return button after a successful payment or when clicking on the Close button if a separate closeURL is not specified. Be sure to include "http://" or "https://" in the url.
 	CloseURL        string  `json:"closeURL,omitempty"`        // URL to redirect if the shopper does not pay the invoice and click on the Close button instead. Be sure to include "http://" or "https://" in the url.
 }
-
 type CreateInvoicePayload struct {
-	BitpayIdRequired                       *bool                         `json:"bitpayIdRequired"`                                 // Forces the invoice to require BitPay ID to be completed, regardless of price.
+	BitpayIdRequired                       *bool                         `json:"bitpayIdRequired,omitempty"`                       // Forces the invoice to require BitPay ID to be completed, regardless of price.
 	MerchantName                           string                        `json:"merchantName,omitempty"`                           // Display string for merchant identification (ex. Wal-Mart Store #1452, Bowling Green, KY).
 	ForcedBuyerSelectedTransactionCurrency string                        `json:"forcedBuyerSelectedTransactionCurrency,omitempty"` // Merchant pre-selects transaction currency on behalf of buyer.
 	ForcedBuyerSelectedWallet              string                        `json:"forcedBuyerSelectedWallet,omitempty"`              // Merchant pre-selects wallet on behalf of buyer.
