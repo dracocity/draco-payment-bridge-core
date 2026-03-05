@@ -67,10 +67,10 @@ func (p *coingatePlugin) Load(cfg config.PGConfig) error {
 		client: httpx.New(httpx.ClientOptions{
 			Client:  &http.Client{Timeout: timeout},
 			BaseURL: baseURL,
-			Headers: map[string]string{
-				"Content-Type":  "application/json",
-				"Accept":        "application/json",
-				"Authorization": "Token " + apiToken,
+			Header: http.Header{
+				"Content-Type":  []string{"application/json"},
+				"Accept":        []string{"application/json"},
+				"Authorization": []string{"Token " + apiToken},
 			},
 			ErrorPrefix: "coingate",
 		}),

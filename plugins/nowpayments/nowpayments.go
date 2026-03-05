@@ -73,9 +73,9 @@ func (p *nowPaymentsPlugin) Load(cfg config.PGConfig) error {
 		client: httpx.New(httpx.ClientOptions{
 			Client:  &http.Client{Timeout: timeout},
 			BaseURL: baseURL,
-			Headers: map[string]string{
-				"Content-Type": "application/json",
-				"x-api-key":    apiKey,
+			Header: http.Header{
+				"Content-Type": []string{"application/json"},
+				"x-api-key":    []string{apiKey},
 			},
 			ErrorPrefix: "nowpayments",
 		}),

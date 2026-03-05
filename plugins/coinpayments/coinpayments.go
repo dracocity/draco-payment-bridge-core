@@ -66,8 +66,8 @@ func (p *coinpaymentsPlugin) Load(cfg config.PGConfig) error {
 		client: httpx.New(httpx.ClientOptions{
 			Client:  &http.Client{Timeout: timeout},
 			BaseURL: baseURL,
-			Headers: map[string]string{
-				"Content-Type": "application/json",
+			Header: http.Header{
+				"Content-Type": []string{"application/json"},
 			},
 			ErrorPrefix: "coinpayments",
 		}),

@@ -61,10 +61,10 @@ func (p *bitpayPlugin) Load(cfg config.PGConfig) error {
 		client: httpx.New(httpx.ClientOptions{
 			Client:  &http.Client{Timeout: timeout},
 			BaseURL: baseURL,
-			Headers: map[string]string{
-				"Content-Type":     "application/json",
-				"X-Accept-Version": "2.0.0",
-				"Accept":           "application/json",
+			Header: http.Header{
+				"Content-Type":     []string{"application/json"},
+				"X-Accept-Version": []string{"2.0.0"},
+				"Accept":           []string{"application/json"},
 			},
 			ErrorPrefix: "bitpay",
 		}),

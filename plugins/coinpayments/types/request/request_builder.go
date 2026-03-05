@@ -7,24 +7,25 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
 
-func BuildRequestHeaders(clientID, clientSecret, method, requestURL string, payload any) (map[string]string, error) {
+func BuildRequestHeaders(clientID, clientSecret, method, requestURL string, payload any) (http.Header, error) {
 	timestamp := time.Now().UTC().Format(time.RFC3339)
 	signature, err := generateSignature(clientID, clientSecret, timestamp, method, requestURL, payload)
 	if err != nil {
 		return nil, fmt.Errorf("generate signature: %w", err)
 	}
 
-	return map[string]string{
-		"Content-Type":             "application/json",
-		"X-CoinPayments-Client":    clientID,
-		"X-CoinPayments-Timestamp": timestamp,
-		"X-CoinPayments-Signature": signature,
+	return http.Header{
+		"Content-Type":             []string{"application/json"},
+		"X-CoinPayments-Client":    []string{clientID},
+		"X-CoinPayments-Timestamp": []string{timestamp},
+		"X-CoinPayments-Signature": []string{signature},
 	}, nil
 }
 

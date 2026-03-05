@@ -16,22 +16,22 @@ import (
 type ClientOptions struct {
 	Client      *http.Client
 	BaseURL     string
-	Headers     map[string]string
+	Header      http.Header
 	ErrorPrefix string
 }
 
 type RequestOptions struct {
-	Method  string
-	Path    string
-	Query   url.Values
-	Headers map[string]string
-	Body    any
+	Method string
+	Path   string
+	Query  url.Values
+	Header http.Header
+	Body   any
 }
 
 type Client struct {
 	client      *http.Client
 	baseURL     string
-	headers     map[string]string
+	header      http.Header
 	errorPrefix string
 	logger      logger.Logger
 }
@@ -41,34 +41,34 @@ func New(opts ClientOptions) *Client {
 	if client == nil {
 		client = http.DefaultClient
 	}
-	headers := make(map[string]string, len(opts.Headers))
-	for key, value := range opts.Headers {
-		headers[key] = value
+	header := opts.Header.Clone()
+	if header == nil {
+		header = http.Header{}
 	}
 	return &Client{
 		client:      client,
 		baseURL:     opts.BaseURL,
-		headers:     headers,
+		header:      header,
 		errorPrefix: opts.ErrorPrefix,
 		logger:      logger.WithModule("httpx"),
 	}
 }
 
-func (c *Client) Get(ctx context.Context, path string, query url.Values, headers map[string]string, out any) error {
+func (c *Client) Get(ctx context.Context, path string, query url.Values, header http.Header, out any) error {
 	return c.Do(ctx, RequestOptions{
-		Method:  http.MethodGet,
-		Path:    path,
-		Query:   query,
-		Headers: headers,
+		Method: http.MethodGet,
+		Path:   path,
+		Query:  query,
+		Header: header,
 	}, out)
 }
 
-func (c *Client) Post(ctx context.Context, path string, headers map[string]string, body any, out any) error {
+func (c *Client) Post(ctx context.Context, path string, header http.Header, body any, out any) error {
 	return c.Do(ctx, RequestOptions{
-		Method:  http.MethodPost,
-		Path:    path,
-		Headers: headers,
-		Body:    body,
+		Method: http.MethodPost,
+		Path:   path,
+		Header: header,
+		Body:   body,
 	}, out)
 }
 
@@ -102,11 +102,11 @@ func (c *Client) Do(ctx context.Context, opts RequestOptions, out any) error {
 		return err
 	}
 
-	for key, value := range c.headers {
-		req.Header.Set(key, value)
+	for key, values := range c.header {
+		req.Header[key] = append([]string(nil), values...)
 	}
-	for key, value := range opts.Headers {
-		req.Header.Set(key, value)
+	for key, values := range opts.Header {
+		req.Header[key] = append([]string(nil), values...)
 	}
 
 	resp, err := c.client.Do(req)
