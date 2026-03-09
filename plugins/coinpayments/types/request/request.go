@@ -3,40 +3,40 @@ package request
 // CreateInvoice
 type CreateInvoice struct {
 	CreateInvoicePayload
-	Currency                   string                        `json:"currency"`                   // Currency of the invoice items and amount
-	Items                      []CreateInvoiceItem           `json:"items"`                      // Array of items that a buyer intends to purchase from the merchant
-	Amount                     *CreateInvoiceAmount          `json:"amount"`                     // Total invoice amount with a breakdown that provides details such as total item amount, total tax amount, shipping, handling, insurance, and discounts, if any.
-	IsEmailDelivery            *bool                         `json:"isEmailDelivery"`            // indicates if invoice will be email delivered
-	EmailDelivery              *CreateInvoiceEmailDelivery   `json:"emailDelivery"`              // Email delivery options of a merchant invoice
-	DueDate                    string                        `json:"dueDate"`                    // optional due date to be shown on the invoice, Format: date-time
-	InvoiceDate                string                        `json:"invoiceDate"`                // optional custom invoice date if not the created date of the invoice, invoices with a future date will be scheduled, Format: date-time
-	Draft                      *bool                         `json:"draft"`                      // flag indicating whether this is a draft invoice
-	ClientID                   string                        `json:"clientId"`                   // the id of the client creating this invoice (optional)
-	InvoiceID                  string                        `json:"invoiceId"`                  // the optional API caller provided external invoice number. Appears in screens shown to the Buyer and emails sent.
-	Buyer                      *CreateInvoiceBuyer           `json:"buyer"`                      // the buyer information
-	Description                string                        `json:"description"`                // the purchase description, can be provided instead of a list of `items`
-	Shipping                   *CreateInvoiceShipping        `json:"shipping"`                   // Invoice shipping address and method
-	RequireBuyerNameAndEmail   *bool                         `json:"requireBuyerNameAndEmail"`   // flag indicating whether a buyer name and email are required, they will be requested at checkout if not provider by the caller. The CoinPayments.Api.Models.Merchant.CreateMerchantInvoiceRequestV2Dto.BuyerDataCollectionMessage will be displayed to the buyer when prompted.
-	BuyerDataCollectionMessage string                        `json:"buyerDataCollectionMessage"` // the message to display when collecting buyer user data
-	Notes                      string                        `json:"notes"`                      // notes for the merchant only, these are not visible to the buyers
-	NotesToRecipient           string                        `json:"notesToRecipient"`           // any additional information to share with the buyer about the transaction
-	TermsAndConditions         string                        `json:"termsAndConditions"`         // any terms and conditions, e.g. a cancellation policy
-	MerchantOptions            *CreateInvoiceMerchantOptions `json:"merchantOptions"`            // Options to show/hide merchant information on an invoice, or include additional merchant information specific to an invoice
-	CustomData                 any                           `json:"customData"`                 // any custom data the caller wishes to attach to the invoice which will be sent back in notifications
-	Metadata                   *CreateInvoiceMetadata        `json:"metadata"`                   // Represents metadata information related to an invoice, including integration and hostname details.
-	PoNumber                   string                        `json:"poNumber"`                   // Merchant's invoice number. Сan store any string. If the field is not filled in, a sequence number will be generated. Must be unique per merchant
-	Webhooks                   []CreateInvoiceWebhook        `json:"webhooks"`                   // Contains an array of
-	PayoutOverrides            []CreateInvoicePayoutOverride `json:"payoutOverrides"`            // Optionally specifies payout configs for this invoice
-	UseCoinReservation         *bool                         `json:"useCoinReservation"`         // Indicates whether the invoice will use coin reservation for FIAT currency during transaction processing.
-	Payment                    *CreateInvoicePayment         `json:"payment"`                    // Request to create an invoice payment with predefined currency
-	HideShoppingCart           *bool                         `json:"hideShoppingCart"`           // Flag for hiding icon on the checkout app
-	AffiliateID                string                        `json:"affiliateId"`                // Identifier of the affiliate associated with the invoice, if applicable, Format: uuid
-	IsSimpleQR                 *bool                         `json:"isSimpleQR"`                 // If IsSimpleQR is true, the checkout app generates a QR code with only the address. Otherwise, the QR code includes the address, currency, and amount.
-	SuccessURL                 string                        `json:"successUrl"`                 // the url to redirect to once an invoice is successfully paid
-	CancelURL                  string                        `json:"cancelUrl"`                  // the url to redirect to if payment of an invoice fails (e.g. expired) or is cancelled by the user
+	Currency    string                 `json:"currency"`    // Currency of the invoice items and amount
+	Amount      *CreateInvoiceAmount   `json:"amount"`      // Total invoice amount with a breakdown that provides details such as total item amount, total tax amount, shipping, handling, insurance, and discounts, if any.
+	Description string                 `json:"description"` // the purchase description, can be provided instead of a list of `items`
+	Webhooks    []CreateInvoiceWebhook `json:"webhooks"`    // Contains an array of
+	Payment     *CreateInvoicePayment  `json:"payment"`     // Request to create an invoice payment with predefined currency
+	SuccessURL  string                 `json:"successUrl"`  // the url to redirect to once an invoice is successfully paid
+	CancelURL   string                 `json:"cancelUrl"`   // the url to redirect to if payment of an invoice fails (e.g. expired) or is cancelled by the user
 }
 
 type CreateInvoicePayload struct {
+	Items                      []CreateInvoiceItem           `json:"items,omitempty"`                      // Array of items that a buyer intends to purchase from the merchant
+	IsEmailDelivery            *bool                         `json:"isEmailDelivery,omitempty"`            // indicates if invoice will be email delivered
+	EmailDelivery              *CreateInvoiceEmailDelivery   `json:"emailDelivery,omitempty"`              // Email delivery options of a merchant invoice
+	DueDate                    string                        `json:"dueDate,omitempty"`                    // optional due date to be shown on the invoice, Format: date-time
+	InvoiceDate                string                        `json:"invoiceDate,omitempty"`                // optional custom invoice date if not the created date of the invoice, invoices with a future date will be scheduled, Format: date-time
+	Draft                      *bool                         `json:"draft,omitempty"`                      // flag indicating whether this is a draft invoice
+	ClientID                   string                        `json:"clientId,omitempty"`                   // the id of the client creating this invoice (optional)
+	InvoiceID                  string                        `json:"invoiceId,omitempty"`                  // the optional API caller provided external invoice number. Appears in screens shown to the Buyer and emails sent.
+	Buyer                      *CreateInvoiceBuyer           `json:"buyer,omitempty"`                      // the buyer information
+	Shipping                   *CreateInvoiceShipping        `json:"shipping,omitempty"`                   // Invoice shipping address and method
+	RequireBuyerNameAndEmail   *bool                         `json:"requireBuyerNameAndEmail,omitempty"`   // flag indicating whether a buyer name and email are required, they will be requested at checkout if not provider by the caller. The CoinPayments.Api.Models.Merchant.CreateMerchantInvoiceRequestV2Dto.BuyerDataCollectionMessage will be displayed to the buyer when prompted.
+	BuyerDataCollectionMessage string                        `json:"buyerDataCollectionMessage,omitempty"` // the message to display when collecting buyer user data
+	Notes                      string                        `json:"notes,omitempty"`                      // notes for the merchant only, these are not visible to the buyers
+	NotesToRecipient           string                        `json:"notesToRecipient,omitempty"`           // any additional information to share with the buyer about the transaction
+	TermsAndConditions         string                        `json:"termsAndConditions,omitempty"`         // any terms and conditions, e.g. a cancellation policy
+	MerchantOptions            *CreateInvoiceMerchantOptions `json:"merchantOptions,omitempty"`            // Options to show/hide merchant information on an invoice, or include additional merchant information specific to an invoice
+	CustomData                 any                           `json:"customData,omitempty"`                 // any custom data the caller wishes to attach to the invoice which will be sent back in notifications
+	Metadata                   *CreateInvoiceMetadata        `json:"metadata,omitempty"`                   // Represents metadata information related to an invoice, including integration and hostname details.
+	PoNumber                   string                        `json:"poNumber,omitempty"`                   // Merchant's invoice number. Сan store any string. If the field is not filled in, a sequence number will be generated. Must be unique per merchant
+	PayoutOverrides            []CreateInvoicePayoutOverride `json:"payoutOverrides"`                      // Optionally specifies payout configs for this invoice
+	UseCoinReservation         *bool                         `json:"useCoinReservation"`                   // Indicates whether the invoice will use coin reservation for FIAT currency during transaction processing.
+	HideShoppingCart           *bool                         `json:"hideShoppingCart"`                     // Flag for hiding icon on the checkout app
+	AffiliateID                string                        `json:"affiliateId"`                          // Identifier of the affiliate associated with the invoice, if applicable, Format: uuid
+	IsSimpleQR                 *bool                         `json:"isSimpleQR"`                           // If IsSimpleQR is true, the checkout app generates a QR code with only the address. Otherwise, the QR code includes the address, currency, and amount.
 }
 
 type CreateInvoiceItem struct {
