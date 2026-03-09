@@ -21,6 +21,14 @@ func Load(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to process environment variables: %w", err)
 	}
 
+	if len(cfg.Listen) == 0 && strings.TrimSpace(cfg.ListenEnv) != "" {
+		listenFromEnv, err := parseListenEnv(cfg.ListenEnv)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Listen = listenFromEnv
+	}
+
 	// Apply providers config from environment variables.
 	applyProviderEnv(cfg)
 
@@ -60,6 +68,44 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func parseListenEnv(raw string) ([]ListenConfig, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, fmt.Errorf("invalid listen env: value is empty")
+	}
+
+	entries := strings.Split(raw, ",")
+	listen := make([]ListenConfig, 0, len(entries))
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+
+		network, address, found := strings.Cut(entry, "@")
+		if !found {
+			return nil, fmt.Errorf("invalid listen env entry '%s': expected network@address", entry)
+		}
+
+		network = strings.TrimSpace(network)
+		address = strings.TrimSpace(address)
+		if network == "" || address == "" {
+			return nil, fmt.Errorf("invalid listen env entry '%s': network and address are required", entry)
+		}
+
+		listen = append(listen, ListenConfig{
+			Network: network,
+			Address: address,
+		})
+	}
+
+	if len(listen) == 0 {
+		return nil, fmt.Errorf("invalid listen env: no valid entries")
+	}
+
+	return listen, nil
 }
 
 func normalizeListenConfig(raw []ListenConfig) ([]ListenConfig, error) {

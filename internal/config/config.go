@@ -2,7 +2,8 @@ package config
 
 type Config struct {
 	PluginDir string              `toml:"plugin_dir" envconfig:"PLUGIN_DIR" default:"./plugins"`
-	Listen    []ListenConfig      `toml:"listen"`
+	ListenEnv string              `toml:"-" envconfig:"LISTEN"`
+	Listen    []ListenConfig      `toml:"listen" ignored:"true"`
 	Providers map[string]PGConfig `toml:"providers"`
 	Log       LogConfig           `toml:"log"`
 }
