@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,6 +33,12 @@ func Load(configPath string) (*Config, error) {
 		}
 	}
 
+	listen, err := normalizeListenConfigs(cfg.Listen)
+	if err != nil {
+		return nil, err
+	}
+	cfg.Listen = listen
+
 	// Expand relative paths to absolute paths
 	if !filepath.IsAbs(cfg.PluginDir) {
 		if wd, err := os.Getwd(); err == nil {
@@ -53,6 +60,53 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func normalizeListenConfigs(raw []ListenConfig) ([]ListenConfig, error) {
+	if len(raw) == 0 {
+		raw = []ListenConfig{{Network: "unix", Address: "/tmp/dpbc.sock"}}
+	}
+
+	normalized := make([]ListenConfig, 0, len(raw))
+	seen := make(map[string]struct{}, len(raw))
+	for _, entry := range raw {
+		network := strings.ToLower(strings.TrimSpace(entry.Network))
+		address := strings.TrimSpace(entry.Address)
+
+		switch network {
+		case "tcp":
+			if address == "" {
+				return nil, fmt.Errorf("invalid listen config: tcp endpoint requires address")
+			}
+			if _, _, err := net.SplitHostPort(address); err != nil {
+				return nil, fmt.Errorf("invalid tcp address '%s': must be host:port", address)
+			}
+		case "unix":
+			if address == "" {
+				return nil, fmt.Errorf("invalid listen config: unix endpoint requires address")
+			}
+			if !filepath.IsAbs(address) {
+				if wd, err := os.Getwd(); err == nil {
+					address = filepath.Join(wd, address)
+				}
+			}
+		default:
+			return nil, fmt.Errorf("invalid listen network '%s': must be tcp or unix", entry.Network)
+		}
+
+		key := network + "|" + address
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		normalized = append(normalized, ListenConfig{Network: network, Address: address})
+	}
+
+	if len(normalized) == 0 {
+		return nil, fmt.Errorf("listen must contain at least one valid endpoint")
+	}
+
+	return normalized, nil
 }
 
 // applyProviderEnv applies provider config from environment variables.

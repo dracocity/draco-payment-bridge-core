@@ -1,3 +1,11 @@
+[[listen]]
+network = "tcp"
+address = ":8080"
+
+[[listen]]
+network = "unix"
+address = "/tmp/app.sock"
+
 port = "8080"
 plugin_dir = "./plugins"
 

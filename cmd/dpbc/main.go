@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -20,6 +23,13 @@ import (
 )
 
 var app *cli.App
+
+type boundListener struct {
+	network  string
+	address  string
+	listener net.Listener
+	server   *http.Server
+}
 
 func init() {
 	app = &cli.App{
@@ -38,20 +48,17 @@ func init() {
 }
 
 func run(ctx *cli.Context) error {
-	// Load config
 	configPath := ctx.String("config")
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("failed to load config (%s): %v", configPath, err)
 	}
 
-	// Initialize logger
 	if err := logger.Init(cfg.Log); err != nil {
 		log.Fatal(err)
 	}
 	defer logger.Sync()
 
-	// Load plugins from configured directory
 	loader := plugin.NewPluginLoader(cfg.PluginDir)
 	plugins, err := loader.LoadPlugins()
 	if err != nil {
@@ -80,28 +87,73 @@ func run(ctx *cli.Context) error {
 	handler := handlers.New(paymentService)
 	handler.RegisterRoutes(router)
 
-	server := &http.Server{
-		Addr:              ":" + cfg.Port,
-		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
+	listeners := make([]boundListener, 0, len(cfg.Listen))
+	for _, endpoint := range cfg.Listen {
+		network := endpoint.Network
+		address := endpoint.Address
+
+		if network == "unix" {
+			if err := os.MkdirAll(filepath.Dir(address), 0o755); err != nil {
+				return err
+			}
+			if err := os.Remove(address); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+		}
+
+		listener, err := net.Listen(network, address)
+		if err != nil {
+			return err
+		}
+
+		if network == "unix" {
+			_ = os.Chmod(address, 0o666)
+		}
+
+		listeners = append(listeners, boundListener{
+			network:  network,
+			address:  address,
+			listener: listener,
+			server: &http.Server{
+				Handler:           router,
+				ReadHeaderTimeout: 5 * time.Second,
+			},
+		})
 	}
+
+	defer func() {
+		for _, ls := range listeners {
+			_ = ls.listener.Close()
+		}
+	}()
 
 	shutdownCh := make(chan os.Signal, 1)
 	signal.Notify(shutdownCh, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		logger.Info("payment bridge server listening", "port", cfg.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("server error", "error", err)
-		}
-	}()
+	for _, ls := range listeners {
+		listener := ls
+		go func() {
+			logger.Info("payment bridge server listening", "network", listener.network, "address", listener.address)
+			if err := listener.server.Serve(listener.listener); err != nil && err != http.ErrServerClosed {
+				logger.Fatal("server error", "network", listener.network, "address", listener.address, "error", err)
+			}
+		}()
+	}
 
 	<-shutdownCh
 	logger.Info("shutting down server")
 
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_ = server.Shutdown(ctxShutdown)
+
+	for _, ls := range listeners {
+		_ = ls.server.Shutdown(ctxShutdown)
+		if ls.network == "unix" {
+			if err := os.Remove(ls.address); err != nil && !errors.Is(err, os.ErrNotExist) {
+				logger.Warn("failed to remove unix domain socket", "path", ls.address, "error", err)
+			}
+		}
+	}
 
 	for name, p := range plugins {
 		if err := p.Unload(); err != nil {
