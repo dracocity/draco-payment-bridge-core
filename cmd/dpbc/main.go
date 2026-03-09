@@ -48,17 +48,20 @@ func init() {
 }
 
 func run(ctx *cli.Context) error {
+	// Load config
 	configPath := ctx.String("config")
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("failed to load config (%s): %v", configPath, err)
 	}
 
+	// Initialize logger
 	if err := logger.Init(cfg.Log); err != nil {
 		log.Fatal(err)
 	}
 	defer logger.Sync()
 
+	// Load plugins from configured directory
 	loader := plugin.NewPluginLoader(cfg.PluginDir)
 	plugins, err := loader.LoadPlugins()
 	if err != nil {

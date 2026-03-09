@@ -33,7 +33,7 @@ func Load(configPath string) (*Config, error) {
 		}
 	}
 
-	listen, err := normalizeListenConfigs(cfg.Listen)
+	listen, err := normalizeListenConfig(cfg.Listen)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func Load(configPath string) (*Config, error) {
 	return cfg, nil
 }
 
-func normalizeListenConfigs(raw []ListenConfig) ([]ListenConfig, error) {
+func normalizeListenConfig(raw []ListenConfig) ([]ListenConfig, error) {
 	if len(raw) == 0 {
 		raw = []ListenConfig{{Network: "unix", Address: "/tmp/dpbc.sock"}}
 	}
