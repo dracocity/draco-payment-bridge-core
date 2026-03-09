@@ -2,13 +2,9 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -23,13 +19,6 @@ import (
 )
 
 var app *cli.App
-
-type boundListener struct {
-	network  string
-	address  string
-	listener net.Listener
-	server   *http.Server
-}
 
 func init() {
 	app = &cli.App{
@@ -90,58 +79,16 @@ func run(ctx *cli.Context) error {
 	handler := handlers.New(paymentService)
 	handler.RegisterRoutes(router)
 
-	listeners := make([]boundListener, 0, len(cfg.Listen))
-	for _, endpoint := range cfg.Listen {
-		network := endpoint.Network
-		address := endpoint.Address
-
-		if network == "unix" {
-			if err := os.MkdirAll(filepath.Dir(address), 0o755); err != nil {
-				return err
-			}
-			if err := os.Remove(address); err != nil && !errors.Is(err, os.ErrNotExist) {
-				return err
-			}
-		}
-
-		listener, err := net.Listen(network, address)
-		if err != nil {
-			return err
-		}
-
-		if network == "unix" {
-			_ = os.Chmod(address, 0o666)
-		}
-
-		listeners = append(listeners, boundListener{
-			network:  network,
-			address:  address,
-			listener: listener,
-			server: &http.Server{
-				Handler:           router,
-				ReadHeaderTimeout: 5 * time.Second,
-			},
-		})
+	listeners, err := bindListeners(cfg.Listen, router)
+	if err != nil {
+		return err
 	}
-
-	defer func() {
-		for _, ls := range listeners {
-			_ = ls.listener.Close()
-		}
-	}()
+	defer closeListeners(listeners)
 
 	shutdownCh := make(chan os.Signal, 1)
 	signal.Notify(shutdownCh, syscall.SIGINT, syscall.SIGTERM)
 
-	for _, ls := range listeners {
-		listener := ls
-		go func() {
-			logger.Info("payment bridge server listening", "network", listener.network, "address", listener.address)
-			if err := listener.server.Serve(listener.listener); err != nil && err != http.ErrServerClosed {
-				logger.Fatal("server error", "network", listener.network, "address", listener.address, "error", err)
-			}
-		}()
-	}
+	startListeners(listeners)
 
 	<-shutdownCh
 	logger.Info("shutting down server")
@@ -149,14 +96,7 @@ func run(ctx *cli.Context) error {
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	for _, ls := range listeners {
-		_ = ls.server.Shutdown(ctxShutdown)
-		if ls.network == "unix" {
-			if err := os.Remove(ls.address); err != nil && !errors.Is(err, os.ErrNotExist) {
-				logger.Warn("failed to remove unix domain socket", "path", ls.address, "error", err)
-			}
-		}
-	}
+	shutdownListeners(ctxShutdown, listeners)
 
 	for name, p := range plugins {
 		if err := p.Unload(); err != nil {
