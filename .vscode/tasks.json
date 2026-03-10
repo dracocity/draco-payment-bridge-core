@@ -2,6 +2,13 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "prepare-debug",
+            "dependsOn": [
+                "build-plugins-debug",
+                "remove-sock"
+            ]
+        },
+        {
             "label": "build-plugins-debug",
             "type": "shell",
             "command": "bash",
@@ -27,6 +34,11 @@
                 "focus": false,
                 "clear": true
             }
+        },
+        {
+            "label": "remove-sock",
+            "type": "shell",
+            "command": "rm -f ${workspaceFolder}/.vscode/tmp/dpbc.sock"
         }
     ]
 }

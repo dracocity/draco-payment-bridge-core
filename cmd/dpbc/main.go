@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -80,28 +79,24 @@ func run(ctx *cli.Context) error {
 	handler := handlers.New(paymentService)
 	handler.RegisterRoutes(router)
 
-	server := &http.Server{
-		Addr:              ":" + cfg.Port,
-		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
+	listeners, err := bindListeners(cfg.Listen, router)
+	if err != nil {
+		return err
 	}
+	defer closeListeners(listeners)
 
 	shutdownCh := make(chan os.Signal, 1)
 	signal.Notify(shutdownCh, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		logger.Info("payment bridge server listening", "port", cfg.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("server error", "error", err)
-		}
-	}()
+	startListeners(listeners)
 
 	<-shutdownCh
 	logger.Info("shutting down server")
 
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_ = server.Shutdown(ctxShutdown)
+
+	shutdownListeners(ctxShutdown, listeners)
 
 	for name, p := range plugins {
 		if err := p.Unload(); err != nil {

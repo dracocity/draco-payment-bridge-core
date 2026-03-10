@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,14 @@ func Load(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to process environment variables: %w", err)
 	}
 
+	if len(cfg.Listen) == 0 && strings.TrimSpace(cfg.ListenEnv) != "" {
+		listenFromEnv, err := parseListenEnv(cfg.ListenEnv)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Listen = listenFromEnv
+	}
+
 	// Apply providers config from environment variables.
 	applyProviderEnv(cfg)
 
@@ -31,6 +40,12 @@ func Load(configPath string) (*Config, error) {
 			}
 		}
 	}
+
+	listen, err := normalizeListenConfig(cfg.Listen)
+	if err != nil {
+		return nil, err
+	}
+	cfg.Listen = listen
 
 	// Expand relative paths to absolute paths
 	if !filepath.IsAbs(cfg.PluginDir) {
@@ -53,6 +68,91 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func parseListenEnv(raw string) ([]ListenConfig, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, fmt.Errorf("invalid listen env: value is empty")
+	}
+
+	entries := strings.Split(raw, ",")
+	listen := make([]ListenConfig, 0, len(entries))
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+
+		network, address, found := strings.Cut(entry, "@")
+		if !found {
+			return nil, fmt.Errorf("invalid listen env entry '%s': expected network@address", entry)
+		}
+
+		network = strings.TrimSpace(network)
+		address = strings.TrimSpace(address)
+		if network == "" || address == "" {
+			return nil, fmt.Errorf("invalid listen env entry '%s': network and address are required", entry)
+		}
+
+		listen = append(listen, ListenConfig{
+			Network: network,
+			Address: address,
+		})
+	}
+
+	if len(listen) == 0 {
+		return nil, fmt.Errorf("invalid listen env: no valid entries")
+	}
+
+	return listen, nil
+}
+
+func normalizeListenConfig(raw []ListenConfig) ([]ListenConfig, error) {
+	if len(raw) == 0 {
+		raw = []ListenConfig{{Network: "unix", Address: "/tmp/dpbc.sock"}}
+	}
+
+	normalized := make([]ListenConfig, 0, len(raw))
+	seen := make(map[string]struct{}, len(raw))
+	for _, entry := range raw {
+		network := strings.ToLower(strings.TrimSpace(entry.Network))
+		address := strings.TrimSpace(entry.Address)
+
+		switch network {
+		case "tcp":
+			if address == "" {
+				return nil, fmt.Errorf("invalid listen config: tcp endpoint requires address")
+			}
+			if _, _, err := net.SplitHostPort(address); err != nil {
+				return nil, fmt.Errorf("invalid tcp address '%s': must be host:port", address)
+			}
+		case "unix":
+			if address == "" {
+				return nil, fmt.Errorf("invalid listen config: unix endpoint requires address")
+			}
+			if !filepath.IsAbs(address) {
+				if wd, err := os.Getwd(); err == nil {
+					address = filepath.Join(wd, address)
+				}
+			}
+		default:
+			return nil, fmt.Errorf("invalid listen network '%s': must be tcp or unix", entry.Network)
+		}
+
+		key := network + "|" + address
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		normalized = append(normalized, ListenConfig{Network: network, Address: address})
+	}
+
+	if len(normalized) == 0 {
+		return nil, fmt.Errorf("listen must contain at least one valid endpoint")
+	}
+
+	return normalized, nil
 }
 
 // applyProviderEnv applies provider config from environment variables.

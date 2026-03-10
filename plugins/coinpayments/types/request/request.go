@@ -32,11 +32,11 @@ type CreateInvoicePayload struct {
 	CustomData                 any                           `json:"customData,omitempty"`                 // any custom data the caller wishes to attach to the invoice which will be sent back in notifications
 	Metadata                   *CreateInvoiceMetadata        `json:"metadata,omitempty"`                   // Represents metadata information related to an invoice, including integration and hostname details.
 	PoNumber                   string                        `json:"poNumber,omitempty"`                   // Merchant's invoice number. Сan store any string. If the field is not filled in, a sequence number will be generated. Must be unique per merchant
-	PayoutOverrides            []CreateInvoicePayoutOverride `json:"payoutOverrides"`                      // Optionally specifies payout configs for this invoice
-	UseCoinReservation         *bool                         `json:"useCoinReservation"`                   // Indicates whether the invoice will use coin reservation for FIAT currency during transaction processing.
-	HideShoppingCart           *bool                         `json:"hideShoppingCart"`                     // Flag for hiding icon on the checkout app
-	AffiliateID                string                        `json:"affiliateId"`                          // Identifier of the affiliate associated with the invoice, if applicable, Format: uuid
-	IsSimpleQR                 *bool                         `json:"isSimpleQR"`                           // If IsSimpleQR is true, the checkout app generates a QR code with only the address. Otherwise, the QR code includes the address, currency, and amount.
+	PayoutOverrides            []CreateInvoicePayoutOverride `json:"payoutOverrides,omitempty"`            // Optionally specifies payout configs for this invoice
+	UseCoinReservation         *bool                         `json:"useCoinReservation,omitempty"`         // Indicates whether the invoice will use coin reservation for FIAT currency during transaction processing.
+	HideShoppingCart           *bool                         `json:"hideShoppingCart,omitempty"`           // Flag for hiding icon on the checkout app
+	AffiliateID                string                        `json:"affiliateId,omitempty"`                // Identifier of the affiliate associated with the invoice, if applicable, Format: uuid
+	IsSimpleQR                 *bool                         `json:"isSimpleQR,omitempty"`                 // If IsSimpleQR is true, the checkout app generates a QR code with only the address. Otherwise, the QR code includes the address, currency, and amount.
 }
 
 type CreateInvoiceItem struct {

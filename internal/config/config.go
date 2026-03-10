@@ -1,10 +1,16 @@
 package config
 
 type Config struct {
-	Port      string              `toml:"port" envconfig:"PORT" default:"8080"`
 	PluginDir string              `toml:"plugin_dir" envconfig:"PLUGIN_DIR" default:"./plugins"`
+	ListenEnv string              `toml:"-" envconfig:"LISTEN"`
+	Listen    []ListenConfig      `toml:"listen" ignored:"true"`
 	Providers map[string]PGConfig `toml:"providers"`
 	Log       LogConfig           `toml:"log"`
+}
+
+type ListenConfig struct {
+	Network string `toml:"network"`
+	Address string `toml:"address"`
 }
 
 // TODO checkoutMode *string `json:"checkout_mode,omitempty"` // HOSTED | SELF_HOSTED

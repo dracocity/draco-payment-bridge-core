@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/dpbc",
+            "program": "${workspaceFolder}/cmd/dpbc/",
             "cwd": "${workspaceFolder}",
             "args": [
                 "--config",
@@ -19,7 +19,7 @@
             //     "DPBC_PLUGIN_DIR": "./dist/debug/plugins",
             //     "NOWPAYMENTS_API_KEY": "NOWPAYMENTS_API_KEY"
             // },
-            "preLaunchTask": "build-plugins-debug"
+            "preLaunchTask": "prepare-debug"
         }
     ]
 }
