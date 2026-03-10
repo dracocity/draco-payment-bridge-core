@@ -35,7 +35,7 @@ http_timeout = "20s"
 [providers.coingate]
 mode = "sandbox" # production, sandbox
 api_token = "COINGATE-API-TOKEN"
-callback_token = "COINGATE-CALLBACK-TOKEN"
+callback_secret = "COINGATE-CALLBACK-SECRET" # You need to define the secret.
 http_timeout = "20s"
 
 [providers.coinpayments]

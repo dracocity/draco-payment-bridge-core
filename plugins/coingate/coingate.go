@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -28,8 +27,8 @@ type coingatePlugin struct {
 }
 
 type coingatePG struct {
-	client        *httpx.Client
-	callbackToken string
+	client         *httpx.Client
+	callbackSecret string
 }
 
 func New() plugin.Plugin {
@@ -50,9 +49,9 @@ func (p *coingatePlugin) Load(cfg config.PGConfig) error {
 	if apiToken == "" {
 		return errors.New("coingate api_token is required")
 	}
-	callbackToken := strings.TrimSpace(cfg["callback_token"])
-	if callbackToken == "" {
-		return errors.New("coingate callback_token is required")
+	callbackSecret := strings.TrimSpace(cfg["callback_secret"])
+	if callbackSecret == "" {
+		return errors.New("coingate callback_secret is required")
 	}
 	timeout := 7 * time.Second
 	if timeoutStr := strings.TrimSpace(cfg["http_timeout"]); timeoutStr != "" {
@@ -74,7 +73,7 @@ func (p *coingatePlugin) Load(cfg config.PGConfig) error {
 			},
 			ErrorPrefix: "coingate",
 		}),
-		callbackToken: callbackToken,
+		callbackSecret: callbackSecret,
 	}
 	return nil
 }
@@ -96,7 +95,7 @@ func (b *coingatePG) Name() string {
 }
 
 func (b *coingatePG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
-	body, err := request.BuildCreateOrder(req, b.callbackToken)
+	body, err := request.BuildCreateOrder(req, b.callbackSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -106,22 +105,7 @@ func (b *coingatePG) CreatePaymentLink(ctx context.Context, req models.CreatePay
 		return nil, err
 	}
 
-	orderID := req.OrderID
-	if resp.OrderID != "" {
-		orderID = resp.OrderID
-	}
-
-	createdAt := toUnixMilli(resp.CreatedAt)
-	return &models.CreatePaymentLinkResponse{
-		InvoiceID:   strconv.FormatInt(resp.ID, 10),
-		OrderID:     orderID,
-		Amount:      resp.PriceAmount,
-		Currency:    strings.ToUpper(resp.PriceCurrency),
-		CheckoutURL: resp.PaymentURL,
-		CreatedAt:   createdAt,
-		UpdatedAt:   createdAt,
-		Raw:         resp,
-	}, nil
+	return response.BuildCreatePaymentLink(resp)
 }
 
 func (b *coingatePG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
