@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -76,4 +77,23 @@ func ToPtrDecimal(value any) (*decimal.Decimal, error) {
 		return &d, nil
 
 	}
+}
+
+func ToUnixMilli(datetime string) int64 {
+	if datetime == "" {
+		return 0
+	}
+
+	if ts, err := time.Parse(time.RFC3339, datetime); err == nil {
+		return ts.UnixMilli()
+	}
+
+	return 0
+}
+
+func PtrValueOrDefault[T any](ptr *T, def T) T {
+	if ptr == nil {
+		return def
+	}
+	return *ptr
 }
