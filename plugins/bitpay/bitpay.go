@@ -100,16 +100,7 @@ func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePayme
 		return nil, err
 	}
 
-	return &models.CreatePaymentLinkResponse{
-		InvoiceID:   resp.Data.ID,
-		OrderID:     resp.Data.OrderID,
-		Amount:      resp.Data.DisplayAmountPaid,
-		Currency:    resp.Data.Currency,
-		CheckoutURL: resp.Data.RedirectURL,
-		CreatedAt:   resp.Data.InvoiceTime,
-		UpdatedAt:   resp.Data.InvoiceTime,
-		Raw:         resp,
-	}, nil
+	return response.BuildCreatePaymentLink(resp, req.WebhookURL)
 }
 
 func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
