@@ -5,6 +5,7 @@ type CreateInvoice struct {
 	CreateInvoicePayload
 	PriceAmount      float64 `json:"price_amount"`                // the amount that users have to pay for the order stated in fiat currency. In case you do not indicate the price in crypto, our system will automatically convert this fiat amount into its crypto equivalent. NOTE: Some of the assets (KISHU, NWC, FTT, CHR, XYM, SRK, KLV, SUPER, OM, XCUR, NOW, SHIB, SAND, MATIC, CTSI, MANA, FRONT, FTM, DAO, LGCY), have a maximum price limit of ~$2000;
 	PriceCurrency    string  `json:"price_currency"`              // the fiat currency in which the price_amount is specified (usd, eur, etc);
+	PayCurrency      string  `json:"pay_currency,omitempty"`      // the specified crypto currency (btc, eth, etc), or one of available fiat currencies if it's enabled for your account (USD, EUR, ILS, GBP, AUD, RON); If not specified, can be chosen on the invoice_url
 	IPNCallbackURL   string  `json:"ipn_callback_url,omitempty"`  // url to receive callbacks, should contain "http" or "https", eg. "https://nowpayments.io";
 	OrderID          string  `json:"order_id,omitempty"`          // internal store order ID, e.g. "RGDBP-21314"
 	OrderDescription string  `json:"order_description,omitempty"` // internal store order description, e.g. "Apple Macbook Pro 2019 x 1"
@@ -13,9 +14,8 @@ type CreateInvoice struct {
 }
 
 type CreateInvoicePayload struct {
-	PayCurrency     string `json:"pay_currency,omitempty"`        // the specified crypto currency (btc, eth, etc), or one of available fiat currencies if it's enabled for your account (USD, EUR, ILS, GBP, AUD, RON); If not specified, can be chosen on the invoice_url
-	IsFixedRate     *bool  `json:"is_fixed_rate,omitempty"`       // boolean, can be true or false. Required for fixed-rate exchanges
-	IsFeePaidByUser *bool  `json:"is_fee_paid_by_user,omitempty"` // boolean, can be true or false. Required for fixed-rate exchanges with all fees paid by users;
+	IsFixedRate     *bool `json:"is_fixed_rate,omitempty"`       // boolean, can be true or false. Required for fixed-rate exchanges
+	IsFeePaidByUser *bool `json:"is_fee_paid_by_user,omitempty"` // boolean, can be true or false. Required for fixed-rate exchanges with all fees paid by users;
 }
 
 // CreateInvoicePayment

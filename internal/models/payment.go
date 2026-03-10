@@ -22,23 +22,25 @@ type CreatePaymentLinkRequest struct {
 }
 
 type CreatePaymentLinkResponse struct {
-	// ===== Basic Identification =====
-	Status    *types.PaymentStatus `json:"status,omitempty"`
-	InvoiceID string               `json:"invoice_id"` // provider invoice id
-	OrderID   string               `json:"order_id"`
-	// ===== Payment Amount Information =====
-	Amount   string `json:"amount,omitempty"`   // provider returned amount
-	Currency string `json:"currency,omitempty"` // provider returned currency
-	// CryptoAmount   string `json:"crypto_amount,omitempty"`   // provider returned crypto amount
-	// CryptoCurrency string `json:"crypto_currency,omitempty"` // provider returned crypto currency
-	// ===== Payment Receiving Information =====
+	InvoiceID string `json:"invoice_id"` // provider invoice id
+
+	Amount          string `json:"amount"`                     // provider returned amount
+	Currency        string `json:"currency"`                   // provider returned currency
+	ReceiveCurrency string `json:"receive_currency,omitempty"` // provider returned receive currency
+
+	OrderID     string `json:"order_id"`
+	Description string `json:"description,omitempty"` // description
+
 	CheckoutURL string `json:"checkout_url"` // checkout page url
 	// QRCodeURL  *string `json:"qr_code_url,omitempty"` // optional
-	// ===== Time Information =====
-	// ExpiresAt *int64 `json:"expires_at,omitempty"` // unix milli
-	CreatedAt int64 `json:"created_at"` // unix milli
-	UpdatedAt int64 `json:"updated_at"` // unix milli
-	// ===== Provider Raw Response =====
+	WebhookURL string `json:"webhook_url,omitempty"` // ipn/notification/callback url
+	SuccessURL string `json:"success_url,omitempty"` // redirect url on success
+	CancelURL  string `json:"cancel_url,omitempty"`  // redirect url on cancel/close
+
+	ExpiresAt *int64 `json:"expires_at,omitempty"` // unix milli
+	CreatedAt int64  `json:"created_at"`           // unix milli
+	UpdatedAt int64  `json:"updated_at"`           // unix milli
+
 	Raw any `json:"raw,omitempty"`
 }
 

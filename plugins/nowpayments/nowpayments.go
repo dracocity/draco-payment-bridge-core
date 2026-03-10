@@ -111,9 +111,29 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 		return nil, err
 	}
 
+	receiveCurrency := ""
+	if resp.PayCurrency != nil {
+		receiveCurrency = *resp.PayCurrency
+	}
+
 	orderID := req.OrderID
 	if resp.OrderID != nil {
 		orderID = *resp.OrderID
+	}
+
+	webhookURL := ""
+	if resp.IPNCallbackURL != nil {
+		webhookURL = *resp.IPNCallbackURL
+	}
+
+	successURL := ""
+	if resp.SuccessURL != nil {
+		successURL = *resp.SuccessURL
+	}
+
+	cancelURL := ""
+	if resp.CancelURL != nil {
+		cancelURL = *resp.CancelURL
 	}
 
 	createdAt := toUnixMilli(resp.CreatedAt)
@@ -122,14 +142,18 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 		updatedAt = createdAt
 	}
 	return &models.CreatePaymentLinkResponse{
-		InvoiceID:   resp.ID,
-		OrderID:     orderID,
-		Amount:      resp.PriceAmount.String(),
-		Currency:    resp.PriceCurrency,
-		CheckoutURL: resp.InvoiceURL,
-		CreatedAt:   createdAt,
-		UpdatedAt:   updatedAt,
-		Raw:         resp,
+		InvoiceID:       resp.ID,
+		Amount:          resp.PriceAmount.String(),
+		Currency:        resp.PriceCurrency,
+		ReceiveCurrency: receiveCurrency,
+		OrderID:         orderID,
+		CheckoutURL:     resp.InvoiceURL,
+		WebhookURL:      webhookURL,
+		SuccessURL:      successURL,
+		CancelURL:       cancelURL,
+		CreatedAt:       createdAt,
+		UpdatedAt:       updatedAt,
+		Raw:             resp,
 	}, nil
 }
 

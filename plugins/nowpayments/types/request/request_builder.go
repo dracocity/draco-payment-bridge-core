@@ -18,9 +18,10 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, er
 	r := &CreateInvoice{
 		PriceAmount:      priceAmount,
 		PriceCurrency:    strings.ToLower(strings.TrimSpace(req.Currency)),
+		PayCurrency:      strings.ToLower(strings.TrimSpace(req.ReceiveCurrency)),
+		IPNCallbackURL:   strings.TrimSpace(req.WebhookURL),
 		OrderID:          strings.TrimSpace(req.OrderID),
 		OrderDescription: strings.TrimSpace(req.Description),
-		IPNCallbackURL:   strings.TrimSpace(req.WebhookURL),
 		SuccessURL:       strings.TrimSpace(req.SuccessURL),
 		CancelURL:        strings.TrimSpace(req.CancelURL),
 	}
@@ -30,7 +31,6 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, er
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
 			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
-		r.PayCurrency = payload.PayCurrency
 		r.IsFixedRate = payload.IsFixedRate
 		r.IsFeePaidByUser = payload.IsFeePaidByUser
 	}
