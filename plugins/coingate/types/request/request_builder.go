@@ -46,7 +46,7 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 		}
 	}
 
-	signature, err := crypto.GenerateSignature(r, callbackSecret)
+	signature, err := crypto.GenerateSignature(r, callbackSecret, "hex")
 	if err != nil {
 		return nil, err
 	}

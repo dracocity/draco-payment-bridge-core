@@ -2,9 +2,6 @@ package request
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,44 +9,34 @@ import (
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/pkg/crypto"
 )
 
-func BuildRequestHeaders(clientID, clientSecret, method, requestURL string, payload any) (http.Header, error) {
-	timestamp := time.Now().UTC().Format(time.RFC3339)
-	signature, err := generateSignature(clientID, clientSecret, timestamp, method, requestURL, payload)
-	if err != nil {
-		return nil, fmt.Errorf("generate signature: %w", err)
-	}
-
-	return http.Header{
-		"Content-Type":             []string{"application/json"},
-		"X-CoinPayments-Client":    []string{clientID},
-		"X-CoinPayments-Timestamp": []string{timestamp},
-		"X-CoinPayments-Signature": []string{signature},
-	}, nil
-}
-
-func generateSignature(clientID, clientSecret, timestamp, method, requestURL string, payload any) (string, error) {
-	if payload == nil {
-		return "", nil
-	}
+func BuildRequestHeader(clientID, clientSecret, method, requestURL string, payload any) (http.Header, error) {
+	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05") // time.RFC3339
 
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
 	if err := enc.Encode(payload); err != nil {
-		return "", err
+		return nil, err
 	}
 	payloadMessage := strings.TrimRight(buf.String(), "\n")
 
-	signingValue := "\uFEFF" + strings.ToUpper(method) + requestURL + clientID + timestamp + payloadMessage
+	message := "\ufeff" + strings.ToUpper(method) + requestURL + clientID + timestamp + payloadMessage
 
-	mac := hmac.New(sha256.New, []byte(clientSecret))
+	signature, err := crypto.GenerateSignature(message, clientSecret, "base64")
+	if err != nil {
+		return nil, fmt.Errorf("generate signature: %w", err)
+	}
 
-	_, _ = mac.Write([]byte(signingValue))
-	return base64.StdEncoding.EncodeToString(mac.Sum(nil)), nil
+	return http.Header{
+		"X-CoinPayments-Timestamp": []string{timestamp},
+		"X-CoinPayments-Signature": []string{signature},
+	}, nil
 }
 
+// TODO: Items required
 func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, error) {
 	description := "Order " + req.OrderID
 	if req.Description != "" {

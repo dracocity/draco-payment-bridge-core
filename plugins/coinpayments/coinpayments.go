@@ -28,6 +28,7 @@ type coinpaymentsPlugin struct {
 
 type coinpaymentsPG struct {
 	client       *httpx.Client
+	baseURL      string
 	clientID     string
 	clientSecret string
 }
@@ -67,10 +68,12 @@ func (p *coinpaymentsPlugin) Load(cfg config.PGConfig) error {
 			Client:  &http.Client{Timeout: timeout},
 			BaseURL: baseURL,
 			Header: http.Header{
-				"Content-Type": []string{"application/json"},
+				"Content-Type":          []string{"application/json"},
+				"X-CoinPayments-Client": []string{clientID},
 			},
 			ErrorPrefix: "coinpayments",
 		}),
+		baseURL:      baseURL,
 		clientID:     clientID,
 		clientSecret: clientSecret,
 	}
@@ -99,7 +102,7 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 	if err != nil {
 		return nil, err
 	}
-	header, err := request.BuildRequestHeaders(b.clientID, b.clientSecret, "POST", "", body)
+	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, "POST", b.baseURL+"/invoices", body)
 	if err != nil {
 		return nil, err
 	}

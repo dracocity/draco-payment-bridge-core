@@ -32,12 +32,12 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 	}
 	defer logger.Sync()
 
-	pgCfg, ok := cfg.Providers["coingate"]
+	pgCfg, ok := cfg.Providers["coinpayments"]
 	if !ok {
-		t.Fatal("coingate config was not loaded from file")
+		t.Fatal("coinpayments config was not loaded from file")
 	}
 
-	p := &coingatePlugin{}
+	p := &coinpaymentsPlugin{}
 	if err := p.Load(pgCfg); err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 		OrderID:    "SAMPLE",
 		Amount:     "3.21",
 		Currency:   "USD",
-		WebhookURL: "https://local.draco.city/api/v1/providers/coingate/webhooks",
+		WebhookURL: "https://local.draco.city/api/v1/providers/coinpayments/webhooks",
 	})
 	if err != nil {
 		t.Fatalf("CreatePaymentLink returned error: %v", err)

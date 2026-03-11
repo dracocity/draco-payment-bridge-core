@@ -3,11 +3,12 @@ package crypto
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 )
 
-func GenerateSignature(payload any, secret string) (string, error) {
+func GenerateSignature(payload any, secret string, encoding string) (string, error) {
 	mac := hmac.New(sha256.New, []byte(secret))
 
 	switch v := payload.(type) {
@@ -24,11 +25,19 @@ func GenerateSignature(payload any, secret string) (string, error) {
 		_, _ = mac.Write(b)
 	}
 
-	return hex.EncodeToString(mac.Sum(nil)), nil
+	var sig string
+	switch encoding {
+	case "base64":
+		sig = base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	case "hex":
+	default:
+		sig = hex.EncodeToString(mac.Sum(nil))
+	}
+	return sig, nil
 }
 
-func VerifySignature(payload any, signature string, secret string) (bool, error) {
-	expected, err := GenerateSignature(payload, secret)
+func VerifySignature(payload any, signature string, secret string, encoding string) (bool, error) {
+	expected, err := GenerateSignature(payload, secret, encoding)
 	if err != nil {
 		return false, err
 	}
