@@ -23,7 +23,7 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 		PriceAmount:     priceAmount,
 		PriceCurrency:   strings.ToUpper(strings.TrimSpace(req.Currency)),
 		ReceiveCurrency: strings.ToUpper(strings.TrimSpace(req.ReceiveCurrency)),
-		Title:           strings.TrimSpace("Order - " + orderID),
+		Title:           strings.TrimSpace("Order " + orderID),
 		Description:     strings.TrimSpace(req.Description),
 		CallbackURL:     strings.TrimSpace(req.WebhookURL),
 		CancelURL:       strings.TrimSpace(req.CancelURL),

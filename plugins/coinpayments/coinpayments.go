@@ -19,7 +19,7 @@ import (
 
 const (
 	aBaseURL = "https://a-api.coinpayments.net/api/v2/merchant"
-	bBaseURL = "https://a-api.coinpayments.net/api/v2/merchant"
+	bBaseURL = "https://b-api.coinpayments.net/api/v2/merchant"
 )
 
 type coinpaymentsPlugin struct {
@@ -38,13 +38,13 @@ func New() plugin.Plugin {
 
 func (p *coinpaymentsPlugin) Load(cfg config.PGConfig) error {
 	var baseURL string
-	switch strings.ToLower(cfg["base_url_type"]) {
-	case "a-base-url":
+	switch strings.ToLower(cfg["api_type"]) {
+	case "a-api":
 		baseURL = aBaseURL
-	case "b-base-url":
+	case "b-api":
 		baseURL = bBaseURL
 	default:
-		return fmt.Errorf("invalid base_url_type: %s", cfg["base_url_type"])
+		return fmt.Errorf("invalid api_type: %s", cfg["api_type"])
 	}
 	clientID := strings.TrimSpace(cfg["client_id"])
 	if clientID == "" {
