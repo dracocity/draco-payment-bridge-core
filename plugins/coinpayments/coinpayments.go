@@ -112,16 +112,7 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 		return nil, err
 	}
 
-	return &models.CreatePaymentLinkResponse{
-		// InvoiceID:    resp.Data.ID,
-		// OrderID:      resp.Data.OrderID,
-		// FiatAmount:   resp.Data.DisplayAmountPaid,
-		// FiatCurrency: resp.Data.Currency,
-		// CheckoutURL:  resp.Data.RedirectURL,
-		// CreatedAt:    resp.Data.InvoiceTime,
-		// UpdatedAt:    resp.Data.InvoiceTime,
-		Raw: resp,
-	}, nil
+	return response.BuildCreatePaymentLink(resp)
 }
 
 func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {

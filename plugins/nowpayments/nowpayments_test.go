@@ -60,10 +60,11 @@ func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	// }
 
 	resp, err := p.pg.CreatePaymentLink(context.Background(), models.CreatePaymentLinkRequest{
-		OrderID:         "SAMPLE",
 		Amount:          "3.21",
 		Currency:        "USD",
 		ReceiveCurrency: "BTC",
+		OrderID:         "SAMPLE",
+		Description:     "test\ntest<br/>test",
 		WebhookURL:      "https://local.draco.city/api/v1/providers/nowpayments/webhooks",
 	})
 	if err != nil {

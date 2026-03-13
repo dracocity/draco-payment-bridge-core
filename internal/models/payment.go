@@ -13,6 +13,8 @@ type CreatePaymentLinkRequest struct {
 
 	OrderID     string `json:"order_id"`
 	Description string `json:"description,omitempty"` // description
+	Items       []Item `json:"items,omitempty"`
+	BuyerEmail  string `json:"buyer_email"`
 
 	WebhookURL string `json:"webhook_url,omitempty"` // ipn/notification/callback url
 	SuccessURL string `json:"success_url,omitempty"` // redirect url on success
