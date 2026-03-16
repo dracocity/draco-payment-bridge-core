@@ -96,7 +96,6 @@ func (b *coinpaymentsPG) Name() string {
 	return "coinpayments"
 }
 
-// TODO:
 func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
 	body, err := request.BuildCreateInvoice(req)
 	if err != nil {
@@ -112,7 +111,7 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 		return nil, err
 	}
 
-	return response.BuildCreatePaymentLink(resp)
+	return response.BuildCreatePaymentLink(resp, req.Amount, req.Currency, req.OrderID)
 }
 
 func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
