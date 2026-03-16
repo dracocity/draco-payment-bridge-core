@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 )
 
 func GenerateSignature(payload any, secret string, encoding string) (string, error) {
@@ -30,8 +31,9 @@ func GenerateSignature(payload any, secret string, encoding string) (string, err
 	case "base64":
 		sig = base64.StdEncoding.EncodeToString(mac.Sum(nil))
 	case "hex":
-	default:
 		sig = hex.EncodeToString(mac.Sum(nil))
+	default:
+		return "", fmt.Errorf("unsupported encoding: %s", encoding)
 	}
 	return sig, nil
 }
