@@ -19,7 +19,7 @@ import (
 
 const (
 	aBaseURL = "https://a-api.coinpayments.net/api/v2/merchant"
-	bBaseURL = "https://a-api.coinpayments.net/api/v2/merchant"
+	bBaseURL = "https://b-api.coinpayments.net/api/v2/merchant"
 )
 
 type coinpaymentsPlugin struct {
@@ -28,6 +28,7 @@ type coinpaymentsPlugin struct {
 
 type coinpaymentsPG struct {
 	client       *httpx.Client
+	baseURL      string
 	clientID     string
 	clientSecret string
 }
@@ -38,13 +39,13 @@ func New() plugin.Plugin {
 
 func (p *coinpaymentsPlugin) Load(cfg config.PGConfig) error {
 	var baseURL string
-	switch strings.ToLower(cfg["base_url_type"]) {
-	case "a-base-url":
+	switch strings.ToLower(cfg["api_type"]) {
+	case "a-api":
 		baseURL = aBaseURL
-	case "b-base-url":
+	case "b-api":
 		baseURL = bBaseURL
 	default:
-		return fmt.Errorf("invalid base_url_type: %s", cfg["base_url_type"])
+		return fmt.Errorf("invalid api_type: %s", cfg["api_type"])
 	}
 	clientID := strings.TrimSpace(cfg["client_id"])
 	if clientID == "" {
@@ -67,10 +68,12 @@ func (p *coinpaymentsPlugin) Load(cfg config.PGConfig) error {
 			Client:  &http.Client{Timeout: timeout},
 			BaseURL: baseURL,
 			Header: http.Header{
-				"Content-Type": []string{"application/json"},
+				"Content-Type":          []string{"application/json"},
+				"X-CoinPayments-Client": []string{clientID},
 			},
 			ErrorPrefix: "coinpayments",
 		}),
+		baseURL:      baseURL,
 		clientID:     clientID,
 		clientSecret: clientSecret,
 	}
@@ -93,13 +96,12 @@ func (b *coinpaymentsPG) Name() string {
 	return "coinpayments"
 }
 
-// TODO:
 func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
 	body, err := request.BuildCreateInvoice(req)
 	if err != nil {
 		return nil, err
 	}
-	header, err := request.BuildRequestHeaders(b.clientID, b.clientSecret, "POST", "", body)
+	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, "POST", b.baseURL+"/invoices", body)
 	if err != nil {
 		return nil, err
 	}
@@ -109,16 +111,7 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 		return nil, err
 	}
 
-	return &models.CreatePaymentLinkResponse{
-		// InvoiceID:    resp.Data.ID,
-		// OrderID:      resp.Data.OrderID,
-		// FiatAmount:   resp.Data.DisplayAmountPaid,
-		// FiatCurrency: resp.Data.Currency,
-		// CheckoutURL:  resp.Data.RedirectURL,
-		// CreatedAt:    resp.Data.InvoiceTime,
-		// UpdatedAt:    resp.Data.InvoiceTime,
-		Raw: resp,
-	}, nil
+	return response.BuildCreatePaymentLink(resp, req.Amount, req.Currency, req.OrderID)
 }
 
 func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {

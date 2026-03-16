@@ -3,12 +3,12 @@ plugin_dir = "./plugins"
 # DPBC_LISTEN="tcp@127.0.0.1:8080,unix@/tmp/dpbc.sock"
 
 [[listen]]
-network = "tcp" # tcp, unix
-address = ":8080" # (tcp) => 127.0.0.1:8080, (unix) => /tmp/app.sock 
+network = "tcp" # tcp | unix
+address = ":8080" # (tcp) => 127.0.0.1:8080 | (unix) => /tmp/app.sock 
 
 [log]
-level = "info" # debug, info, warn, error
-format = "json" # console or json
+level = "info" # debug | info | warn | error
+format = "json" # console | json
 
 [log.output]
 stdout = true
@@ -22,24 +22,24 @@ max_age = 7 # day
 compress = true # gzip compression
 
 [providers.nowpayments]
-mode = "sandbox" # production, sandbox
+mode = "sandbox" # production | sandbox
 api_key = "NOWPAYMENTS-API-KEY"
 ipn_secret = "NOWPAYMENTS-IPN-SECRET"
 http_timeout = "20s"
 
 [providers.bitpay]
-mode = "sandbox" # production, sandbox
+mode = "sandbox" # production | sandbox
 api_token = "BITPAY-API-TOKEN"
 http_timeout = "20s"
 
 [providers.coingate]
-mode = "sandbox" # production, sandbox
+mode = "sandbox" # production | sandbox
 api_token = "COINGATE-API-TOKEN"
-callback_token = "COINGATE-CALLBACK-TOKEN"
+callback_secret = "COINGATE-CALLBACK-SECRET" # You need to define the secret.
 http_timeout = "20s"
 
 [providers.coinpayments]
-base_url_type = "a-base-url" # a-base-url, b-base-url
+api_type = "a-api" # "a-api" | "b-api"
 client_id = "COINPAYMENTS-CLIENT-ID"
 client_secret = "COINPAYMENTS-CLIENT-SECRET"
 http_timeout = "20s"

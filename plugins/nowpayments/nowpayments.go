@@ -21,6 +21,7 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 	"github.com/dracocity/draco-payment-bridge-core/internal/types"
+	"github.com/dracocity/draco-payment-bridge-core/pkg/utils"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/response"
 )
@@ -111,26 +112,7 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 		return nil, err
 	}
 
-	orderID := req.OrderID
-	if resp.OrderID != nil {
-		orderID = *resp.OrderID
-	}
-
-	createdAt := toUnixMilli(resp.CreatedAt)
-	updatedAt := toUnixMilli(resp.UpdatedAt)
-	if updatedAt == 0 {
-		updatedAt = createdAt
-	}
-	return &models.CreatePaymentLinkResponse{
-		InvoiceID:   resp.ID,
-		OrderID:     orderID,
-		Amount:      resp.PriceAmount.String(),
-		Currency:    resp.PriceCurrency,
-		CheckoutURL: resp.InvoiceURL,
-		CreatedAt:   createdAt,
-		UpdatedAt:   updatedAt,
-		Raw:         resp,
-	}, nil
+	return response.BuildCreatePaymentLink(resp)
 }
 
 func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
@@ -151,12 +133,12 @@ func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaym
 		orderID = *resp.OrderID
 	}
 
-	createdAt := toUnixMilli(resp.CreatedAt)
-	expiresAt := toUnixMilli(resp.ExpirationEstimateDate)
+	createdAt := utils.ToUnixMilli(resp.CreatedAt)
+	expiresAt := utils.ToUnixMilli(resp.ExpirationEstimateDate)
 	if expiresAt == 0 {
 		expiresAt = createdAt + 1800000 // 30 minutes
 	}
-	updatedAt := toUnixMilli(resp.UpdatedAt)
+	updatedAt := utils.ToUnixMilli(resp.UpdatedAt)
 	if updatedAt == 0 {
 		updatedAt = createdAt
 	}
@@ -219,8 +201,8 @@ func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*mode
 		remainingAmount = remainingAmount.Sub(remainingAmount)
 	}
 
-	createdAt := toUnixMilli(resp.CreatedAt)
-	updatedAt := toUnixMilli(resp.UpdatedAt)
+	createdAt := utils.ToUnixMilli(resp.CreatedAt)
+	updatedAt := utils.ToUnixMilli(resp.UpdatedAt)
 	if updatedAt == 0 {
 		updatedAt = createdAt
 	}
@@ -334,18 +316,6 @@ func marshalNoEscape(value interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return bytes.TrimRight(buf.Bytes(), "\n"), nil
-}
-
-func toUnixMilli(datetime string) int64 {
-	if datetime == "" {
-		return 0
-	}
-
-	if ts, err := time.Parse(time.RFC3339, datetime); err == nil {
-		return ts.UnixMilli()
-	}
-
-	return 0
 }
 
 func normalizeNowPaymentsStatus(status string) types.PaymentStatus {

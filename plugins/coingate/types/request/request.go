@@ -12,10 +12,10 @@ type CreateOrder struct {
 	CallbackURL     string  `json:"callback_url,omitempty"`     // Send an automated message to Merchant URL when order status is changed. For testing you can use requestcatcher.com tool. URL must be direct without redirection.
 	CancelURL       string  `json:"cancel_url,omitempty"`       // Redirect to Merchant URL when buyer cancels the order.
 	SuccessURL      string  `json:"success_url,omitempty"`      // Redirect to Merchant URL after successful payment.
+	Token           string  `json:"token,omitempty"`            // Your custom token to validate payment callback (notification).
 }
 
 type CreateOrderPayload struct {
-	Token   string              `json:"token,omitempty"`   // Your custom token to validate payment callback (notification).
 	Shopper *CreateOrderShopper `json:"shopper,omitempty"` // Optional object to enhance the shopper’s experience and prefill the Travel Rule form on the checkout page. Learn more about the Travel Rule. All fields are optional.
 }
 

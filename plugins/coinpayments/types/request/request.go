@@ -4,6 +4,7 @@ package request
 type CreateInvoice struct {
 	CreateInvoicePayload
 	Currency    string                 `json:"currency"`    // Currency of the invoice items and amount
+	Items       []CreateInvoiceItem    `json:"items"`       // Array of items that a buyer intends to purchase from the merchant
 	Amount      *CreateInvoiceAmount   `json:"amount"`      // Total invoice amount with a breakdown that provides details such as total item amount, total tax amount, shipping, handling, insurance, and discounts, if any.
 	Description string                 `json:"description"` // the purchase description, can be provided instead of a list of `items`
 	Webhooks    []CreateInvoiceWebhook `json:"webhooks"`    // Contains an array of
@@ -13,7 +14,6 @@ type CreateInvoice struct {
 }
 
 type CreateInvoicePayload struct {
-	Items                      []CreateInvoiceItem           `json:"items,omitempty"`                      // Array of items that a buyer intends to purchase from the merchant
 	IsEmailDelivery            *bool                         `json:"isEmailDelivery,omitempty"`            // indicates if invoice will be email delivered
 	EmailDelivery              *CreateInvoiceEmailDelivery   `json:"emailDelivery,omitempty"`              // Email delivery options of a merchant invoice
 	DueDate                    string                        `json:"dueDate,omitempty"`                    // optional due date to be shown on the invoice, Format: date-time
@@ -40,14 +40,14 @@ type CreateInvoicePayload struct {
 }
 
 type CreateInvoiceItem struct {
-	CustomID       string                 `json:"customId"`       // the API caller provided external ID for the item. Appears on the Merchant dashboard and reports only.
-	SKU            string                 `json:"sku"`            // the stock keeping unit (SKU) of the item
-	Name           string                 `json:"name"`           // (* required) the name or title of the item
-	Description    string                 `json:"description"`    // the detailed description of the item
-	Quantity       *CreateInvoiceQuantity `json:"quantity"`       // Represents the quantity details for a line item in the CoinPayments merchant system. This class defines both the value of the quantity and its associated type.
-	OriginalAmount string                 `json:"originalAmount"` // the original total price of the item if CoinPayments.Services.Merchants.Dtos.LineItemV2Dto.Amount represents a discounted price
-	Amount         string                 `json:"amount"`         // the subtotal price of the item (note: this is not a per unit price but the total price for the total quantity)
-	Tax            string                 `json:"tax"`            // the total taxes charged on this item
+	CustomID       string                 `json:"customId"`                 // the API caller provided external ID for the item. Appears on the Merchant dashboard and reports only.
+	SKU            string                 `json:"sku,omitempty"`            // the stock keeping unit (SKU) of the item
+	Name           string                 `json:"name"`                     // (* required) the name or title of the item
+	Description    string                 `json:"description,omitempty"`    // the detailed description of the item
+	Quantity       *CreateInvoiceQuantity `json:"quantity"`                 // Represents the quantity details for a line item in the CoinPayments merchant system. This class defines both the value of the quantity and its associated type.
+	OriginalAmount string                 `json:"originalAmount,omitempty"` // the original total price of the item if CoinPayments.Services.Merchants.Dtos.LineItemV2Dto.Amount represents a discounted price
+	Amount         string                 `json:"amount"`                   // the subtotal price of the item (note: this is not a per unit price but the total price for the total quantity)
+	Tax            string                 `json:"tax,omitempty"`            // the total taxes charged on this item
 }
 
 type CreateInvoiceQuantity struct {
@@ -56,8 +56,8 @@ type CreateInvoiceQuantity struct {
 }
 
 type CreateInvoiceAmount struct {
-	Breakdown *CreateInvoiceBreakdown `json:"breakdown"` // No further information available.
-	Total     string                  `json:"total"`     // The total amount associated with the invoice, encompassing all charges, fees, and adjustments.
+	Breakdown *CreateInvoiceBreakdown `json:"breakdown,omitempty"` // No further information available.
+	Total     string                  `json:"total"`               // The total amount associated with the invoice, encompassing all charges, fees, and adjustments.
 }
 
 type CreateInvoiceBreakdown struct {
@@ -134,6 +134,6 @@ type CreateInvoicePayoutOverride struct {
 }
 
 type CreateInvoicePayment struct {
-	PaymentCurrency string `json:"paymentCurrency"` // Create payment address for currency.
-	RefundEmail     string `json:"refundEmail"`     // Email for refund instructions if there is a payment issue.
+	PaymentCurrency string `json:"paymentCurrency,omitempty"` // Create payment address for currency.
+	RefundEmail     string `json:"refundEmail"`               // Email for refund instructions if there is a payment issue.
 }

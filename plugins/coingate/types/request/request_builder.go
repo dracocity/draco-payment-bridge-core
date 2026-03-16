@@ -7,32 +7,67 @@ import (
 	"strings"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/pkg/crypto"
 )
 
-func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackToken string) (*CreateOrder, error) {
+func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string) (*CreateOrder, error) {
+	orderID := strings.TrimSpace(req.OrderID)
+
 	priceAmount, err := strconv.ParseFloat(strings.TrimSpace(req.Amount), 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid amount: %w", err)
 	}
 
+	description := strings.TrimSpace(req.Description)
+	if n := len(req.Items); n > 0 {
+		item := req.Items[0]
+		if description != "" {
+			description += " | "
+		}
+		description += fmt.Sprintf("%s x%d", item.Name, item.Quantity)
+		if n > 1 {
+			description += fmt.Sprintf(" (+%d more)", n-1)
+		}
+	}
+
 	r := &CreateOrder{
-		OrderID:         strings.TrimSpace(req.OrderID),
+		OrderID:         orderID,
 		PriceAmount:     priceAmount,
 		PriceCurrency:   strings.ToUpper(strings.TrimSpace(req.Currency)),
 		ReceiveCurrency: strings.ToUpper(strings.TrimSpace(req.ReceiveCurrency)),
-		Title:           strings.TrimSpace(req.Description), // TODO: Title
-		Description:     strings.TrimSpace(req.Description), // TODO: Description
+		Title:           strings.TrimSpace("Order " + orderID),
+		Description:     description,
 		CallbackURL:     strings.TrimSpace(req.WebhookURL),
 		CancelURL:       strings.TrimSpace(req.CancelURL),
 		SuccessURL:      strings.TrimSpace(req.SuccessURL),
 	}
+
 	if len(req.ProviderPayload) > 0 {
 		var payload CreateOrderPayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
 			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
-		r.Token = payload.Token
+		if payload.Shopper != nil {
+			s := *payload.Shopper
+			r.Shopper = &s
+			r.Shopper.Email = req.BuyerEmail
+
+			if payload.Shopper.CompanyDetails != nil {
+				scd := *payload.Shopper.CompanyDetails
+				r.Shopper.CompanyDetails = &scd
+			}
+		}
 	}
+
+	if r.Shopper == nil {
+		r.Shopper = &CreateOrderShopper{Email: req.BuyerEmail}
+	}
+
+	signature, err := crypto.GenerateSignature(r, callbackSecret, "hex")
+	if err != nil {
+		return nil, err
+	}
+	r.Token = signature
 
 	return r, nil
 }
