@@ -39,7 +39,7 @@ callback_secret = "COINGATE-CALLBACK-SECRET" # You need to define the secret.
 http_timeout = "20s"
 
 [providers.coinpayments]
-api_type = "a-api" | "b-api"
+api_type = "a-api" # "a-api" | "b-api"
 client_id = "COINPAYMENTS-CLIENT-ID"
 client_secret = "COINPAYMENTS-CLIENT-SECRET"
 http_timeout = "20s"
