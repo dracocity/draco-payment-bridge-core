@@ -43,9 +43,21 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 	}
 
 	resp, err := p.pg.CreatePaymentLink(context.Background(), models.CreatePaymentLinkRequest{
-		OrderID:    "SAMPLE",
-		Amount:     "3.21",
-		Currency:   "USD",
+		Amount:      "3.21",
+		Currency:    "USD",
+		OrderID:     "SAMPLE",
+		Description: "DESCRIPTION",
+		Items: []models.Item{{
+			ID:       "ItemID",
+			Name:     "ItemName",
+			Quantity: 1,
+			Amount:   "3.21",
+		}, {
+			ID:       "ItemID",
+			Name:     "ItemName",
+			Quantity: 1,
+			Amount:   "3.21",
+		}},
 		WebhookURL: "https://local.draco.city/api/v1/providers/bitpay/webhooks",
 	})
 	if err != nil {

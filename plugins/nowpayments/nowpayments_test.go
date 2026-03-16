@@ -64,8 +64,19 @@ func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 		Currency:        "USD",
 		ReceiveCurrency: "BTC",
 		OrderID:         "SAMPLE",
-		Description:     "test\ntest<br/>test",
-		WebhookURL:      "https://local.draco.city/api/v1/providers/nowpayments/webhooks",
+		Description:     "DESCRIPTION",
+		Items: []models.Item{{
+			ID:       "ItemID",
+			Name:     "ItemName",
+			Quantity: 1,
+			Amount:   "3.21",
+		}, {
+			ID:       "ItemID",
+			Name:     "ItemName",
+			Quantity: 1,
+			Amount:   "3.21",
+		}},
+		WebhookURL: "https://local.draco.city/api/v1/providers/nowpayments/webhooks",
 	})
 	if err != nil {
 		t.Fatalf("CreatePaymentLink returned error: %v", err)

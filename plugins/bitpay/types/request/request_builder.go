@@ -14,13 +14,24 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest, apiToken string) (*
 	if err != nil {
 		return nil, fmt.Errorf("invalid fiat_amount: %w", err)
 	}
+	itemDesc := strings.TrimSpace(req.Description)
+	if n := len(req.Items); n > 0 {
+		item := req.Items[0]
+		if itemDesc != "" {
+			itemDesc += " | "
+		}
+		itemDesc += fmt.Sprintf("%s x%d", item.Name, item.Quantity)
+		if n > 1 {
+			itemDesc += fmt.Sprintf(" (+%d more)", n-1)
+		}
+	}
 
 	r := &CreateInvoice{
 		Token:           apiToken,
 		Price:           price,
 		Currency:        strings.ToLower(strings.TrimSpace(req.Currency)),
 		OrderID:         strings.TrimSpace(req.OrderID),
-		ItemDesc:        strings.TrimSpace(req.Description),
+		ItemDesc:        itemDesc,
 		NotificationURL: strings.TrimSpace(req.WebhookURL),
 		RedirectURL:     strings.TrimSpace(req.SuccessURL),
 		CloseURL:        strings.TrimSpace(req.CancelURL),
@@ -49,9 +60,14 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest, apiToken string) (*
 		if payload.Buyer != nil {
 			b := *payload.Buyer
 			r.Buyer = &b
+			r.Buyer.Email = req.BuyerEmail
 		}
 		r.JsonPayProRequired = payload.JsonPayProRequired
 		r.AcceptanceWindow = payload.AcceptanceWindow
+	}
+
+	if r.Buyer == nil {
+		r.Buyer = &CreateInvoiceBuyer{Email: req.BuyerEmail}
 	}
 
 	return r, nil

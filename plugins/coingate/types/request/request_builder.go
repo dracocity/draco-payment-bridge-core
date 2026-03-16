@@ -18,13 +18,25 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 		return nil, fmt.Errorf("invalid amount: %w", err)
 	}
 
+	description := strings.TrimSpace(req.Description)
+	if n := len(req.Items); n > 0 {
+		item := req.Items[0]
+		if description != "" {
+			description += " | "
+		}
+		description += fmt.Sprintf("%s x%d", item.Name, item.Quantity)
+		if n > 1 {
+			description += fmt.Sprintf(" (+%d more)", n-1)
+		}
+	}
+
 	r := &CreateOrder{
 		OrderID:         orderID,
 		PriceAmount:     priceAmount,
 		PriceCurrency:   strings.ToUpper(strings.TrimSpace(req.Currency)),
 		ReceiveCurrency: strings.ToUpper(strings.TrimSpace(req.ReceiveCurrency)),
 		Title:           strings.TrimSpace("Order " + orderID),
-		Description:     strings.TrimSpace(req.Description),
+		Description:     description,
 		CallbackURL:     strings.TrimSpace(req.WebhookURL),
 		CancelURL:       strings.TrimSpace(req.CancelURL),
 		SuccessURL:      strings.TrimSpace(req.SuccessURL),
@@ -38,12 +50,17 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 		if payload.Shopper != nil {
 			s := *payload.Shopper
 			r.Shopper = &s
+			r.Shopper.Email = req.BuyerEmail
 
 			if payload.Shopper.CompanyDetails != nil {
 				scd := *payload.Shopper.CompanyDetails
 				r.Shopper.CompanyDetails = &scd
 			}
 		}
+	}
+
+	if r.Shopper == nil {
+		r.Shopper = &CreateOrderShopper{Email: req.BuyerEmail}
 	}
 
 	signature, err := crypto.GenerateSignature(r, callbackSecret, "hex")
