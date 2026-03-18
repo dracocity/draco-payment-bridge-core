@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -115,7 +116,11 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 	return response.BuildCreatePaymentLink(resp)
 }
 
+// TODO: I will be using this feature on my self-hosted page.
 func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
+	if true {
+		return nil, errors.New("be using this feature on my self-hosted page(nowpayments)")
+	}
 	// TODO
 	body, err := request.BuildCreateInvoicePayment(req)
 	if err != nil {
@@ -222,7 +227,7 @@ func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*mode
 
 	return &models.GetPaymentResponse{
 		Status:          normalizeNowPaymentsStatus(resp.PaymentStatus),
-		PaymentID:       resp.PaymentID,
+		PaymentID:       strconv.FormatInt(resp.PaymentID, 10),
 		OrderID:         orderID,
 		Currency:        currency,
 		Amount:          expectedAmount.String(),
