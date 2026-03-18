@@ -102,7 +102,7 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 	if err != nil {
 		return nil, err
 	}
-	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, "POST", b.baseURL+"/invoices", body)
+	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, http.MethodPost, b.baseURL, "/invoices", nil, body)
 	if err != nil {
 		return nil, err
 	}
@@ -120,12 +120,13 @@ func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePay
 }
 
 func (b *coinpaymentsPG) GetPayment(ctx context.Context, invoiceID string) (*models.GetPaymentResponse, error) {
-	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, "GET", b.baseURL+"/invoices/"+invoiceID+"?include_full_details=false", nil)
+	query := url.Values{"include_full_details": []string{"false"}}
+	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, http.MethodGet, b.baseURL, "/invoices/"+invoiceID, query, nil)
 	if err != nil {
 		return nil, err
 	}
 	var resp response.GetInvoice
-	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"include_full_details": []string{"false"}}, header, &resp); err != nil {
+	if err := b.client.Get(ctx, "/invoices/"+invoiceID, query, header, &resp); err != nil {
 		return nil, err
 	}
 	return &models.GetPaymentResponse{}, nil

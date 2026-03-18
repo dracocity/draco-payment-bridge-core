@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -12,15 +13,23 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/pkg/crypto"
 )
 
-func BuildRequestHeader(clientID, clientSecret, method, requestURL string, payload any) (http.Header, error) {
+func BuildRequestHeader(clientID, clientSecret, method, baseURL, path string, query url.Values, payload any) (http.Header, error) {
+	requestURL := strings.TrimRight(baseURL, "/") + "/" + strings.TrimLeft(path, "/")
+	if encodedQuery := query.Encode(); encodedQuery != "" {
+		requestURL += "?" + encodedQuery
+	}
+
 	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05") // time.RFC3339
 
 	var buf bytes.Buffer
-	if payload != nil && payload != "" {
-		enc := json.NewEncoder(&buf)
-		enc.SetEscapeHTML(false)
-		if err := enc.Encode(payload); err != nil {
-			return nil, err
+	if payload != nil {
+		// Preserve previous behavior: skip body serialization when payload is an empty string.
+		if s, ok := payload.(string); !ok || s != "" {
+			enc := json.NewEncoder(&buf)
+			enc.SetEscapeHTML(false)
+			if err := enc.Encode(payload); err != nil {
+				return nil, err
+			}
 		}
 	}
 	payloadMessage := strings.TrimRight(buf.String(), "\n")
