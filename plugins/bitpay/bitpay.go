@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -104,10 +105,14 @@ func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePayme
 }
 
 func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	return &models.CreatePaymentResponse{}, nil
+	return nil, errors.New("be using this feature on my self-hosted page(bitpay)")
 }
 
-func (b *bitpayPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
+func (b *bitpayPG) GetPayment(ctx context.Context, invoiceId string) (*models.GetPaymentResponse, error) {
+	var resp response.RetrieveInvoice
+	if err := b.client.Get(ctx, "/invoices/"+invoiceId, url.Values{"token": []string{b.apiToken}}, nil, &resp); err != nil {
+		return nil, err
+	}
 	return &models.GetPaymentResponse{}, nil
 }
 
