@@ -109,10 +109,14 @@ func (b *coingatePG) CreatePaymentLink(ctx context.Context, req models.CreatePay
 }
 
 func (b *coingatePG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	return &models.CreatePaymentResponse{}, nil
+	return nil, errors.New("be using this feature on my self-hosted page(coingate)")
 }
 
-func (b *coingatePG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
+func (b *coingatePG) GetPayment(ctx context.Context, orderID string) (*models.GetPaymentResponse, error) {
+	var resp response.GetOrder
+	if err := b.client.Get(ctx, "/orders/"+orderID, nil, nil, &resp); err != nil {
+		return nil, err
+	}
 	return &models.GetPaymentResponse{}, nil
 }
 

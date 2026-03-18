@@ -66,3 +66,36 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 
 	fmt.Println(resp)
 }
+
+func TestGetPayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
+	t.Parallel()
+
+	cfgPath := "../../.vscode/tmp/config.toml"
+	cfg, err := config.Load(cfgPath)
+	if err != nil {
+		t.Fatalf("failed to load config file: %v", err)
+	}
+
+	if err := logger.Init(cfg.Log); err != nil {
+		log.Fatal(err)
+	}
+	defer logger.Sync()
+
+	pgCfg, ok := cfg.Providers["coingate"]
+	if !ok {
+		t.Fatal("coingate config was not loaded from file")
+	}
+
+	p := &coingatePlugin{}
+	if err := p.Load(pgCfg); err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	orderID := "372123"
+	resp, err := p.pg.GetPayment(context.Background(), orderID)
+	if err != nil {
+		t.Fatalf("GetPayment returned error: %v", err)
+	}
+
+	fmt.Println(resp)
+}
