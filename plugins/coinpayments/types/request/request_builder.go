@@ -16,10 +16,12 @@ func BuildRequestHeader(clientID, clientSecret, method, requestURL string, paylo
 	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05") // time.RFC3339
 
 	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	if err := enc.Encode(payload); err != nil {
-		return nil, err
+	if payload != nil && payload != "" {
+		enc := json.NewEncoder(&buf)
+		enc.SetEscapeHTML(false)
+		if err := enc.Encode(payload); err != nil {
+			return nil, err
+		}
 	}
 	payloadMessage := strings.TrimRight(buf.String(), "\n")
 

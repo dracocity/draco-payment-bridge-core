@@ -108,9 +108,9 @@ func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRe
 	return nil, errors.New("be using this feature on my self-hosted page(bitpay)")
 }
 
-func (b *bitpayPG) GetPayment(ctx context.Context, invoiceId string) (*models.GetPaymentResponse, error) {
+func (b *bitpayPG) GetPayment(ctx context.Context, invoiceID string) (*models.GetPaymentResponse, error) {
 	var resp response.RetrieveInvoice
-	if err := b.client.Get(ctx, "/invoices/"+invoiceId, url.Values{"token": []string{b.apiToken}}, nil, &resp); err != nil {
+	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, nil, &resp); err != nil {
 		return nil, err
 	}
 	return &models.GetPaymentResponse{}, nil

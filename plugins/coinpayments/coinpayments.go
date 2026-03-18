@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -115,10 +116,18 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 }
 
 func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	return &models.CreatePaymentResponse{}, nil
+	return nil, errors.New("be using this feature on my self-hosted page(coinpayments)")
 }
 
-func (b *coinpaymentsPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
+func (b *coinpaymentsPG) GetPayment(ctx context.Context, invoiceID string) (*models.GetPaymentResponse, error) {
+	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, "GET", b.baseURL+"/invoices/"+invoiceID+"?include_full_details=false", nil)
+	if err != nil {
+		return nil, err
+	}
+	var resp response.GetInvoice
+	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"include_full_details": []string{"false"}}, header, &resp); err != nil {
+		return nil, err
+	}
 	return &models.GetPaymentResponse{}, nil
 }
 
