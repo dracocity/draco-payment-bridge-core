@@ -131,8 +131,12 @@ func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRe
 }
 
 func (b *bitpayPG) GetPayment(ctx context.Context, invoiceID string) (*models.GetPaymentResponse, error) {
+	header, err := request.BuildRequestHeader(b.apiPrivKey, b.baseURL, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, nil)
+	if err != nil {
+		return nil, err
+	}
 	var resp response.RetrieveInvoice
-	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, nil, &resp); err != nil {
+	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, header, &resp); err != nil {
 		return nil, err
 	}
 	return &models.GetPaymentResponse{
