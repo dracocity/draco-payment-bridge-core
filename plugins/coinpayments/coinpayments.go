@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/consts"
 	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
+	"github.com/dracocity/draco-payment-bridge-core/internal/types"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/coinpayments/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/coinpayments/types/response"
 )
@@ -101,7 +104,7 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 	if err != nil {
 		return nil, err
 	}
-	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, "POST", b.baseURL+"/invoices", body)
+	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, http.MethodPost, b.baseURL, "/invoices", nil, body)
 	if err != nil {
 		return nil, err
 	}
@@ -115,11 +118,39 @@ func (b *coinpaymentsPG) CreatePaymentLink(ctx context.Context, req models.Creat
 }
 
 func (b *coinpaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	return &models.CreatePaymentResponse{}, nil
+	return nil, errors.New("be using this feature on my self-hosted page(coinpayments)")
 }
 
-func (b *coinpaymentsPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
-	return &models.GetPaymentResponse{}, nil
+func (b *coinpaymentsPG) GetPayment(ctx context.Context, invoiceID string) (*models.GetPaymentResponse, error) {
+	query := url.Values{"include_full_details": []string{"false"}}
+	header, err := request.BuildRequestHeader(b.clientID, b.clientSecret, http.MethodGet, b.baseURL, "/invoices/"+invoiceID, query, nil)
+	if err != nil {
+		return nil, err
+	}
+	var resp response.GetInvoice
+	if err := b.client.Get(ctx, "/invoices/"+invoiceID, query, header, &resp); err != nil {
+		return nil, err
+	}
+	amount := ""
+	if resp.Amount != nil {
+		amount = strings.TrimSpace(resp.Amount.Total)
+	}
+
+	currency := ""
+	if resp.Currency != nil {
+		currency = strings.ToUpper(strings.TrimSpace(resp.Currency.Symbol))
+	}
+
+	return &models.GetPaymentResponse{
+		Status:         normalizeCoinPaymentsStatus(resp.Status),
+		ProviderStatus: strings.TrimSpace(resp.Status),
+		PaymentID:      strings.TrimSpace(resp.ID),
+		OrderID:        strings.TrimSpace(resp.InvoiceID),
+		Currency:       currency,
+		Amount:         amount,
+		CreatedAt:      toUnixMilli(resp.Created),
+		Raw:            resp,
+	}, nil
 }
 
 func (b *coinpaymentsPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
@@ -135,4 +166,39 @@ func (b *coinpaymentsPG) HandleWebhook(ctx context.Context, payload []byte, head
 
 func formatAmount(amount float64) string {
 	return fmt.Sprintf("%.2f", amount)
+}
+
+func toUnixMilli(datetime string) int64 {
+	if datetime == "" {
+		return 0
+	}
+
+	if ts, err := time.Parse(time.RFC3339, datetime); err == nil {
+		return ts.UnixMilli()
+	}
+
+	return 0
+}
+
+func normalizeCoinPaymentsStatus(status string) types.PaymentStatus {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "new":
+		return consts.StatusCreated
+	case "pending":
+		return consts.StatusPending
+	case "paid":
+		return consts.StatusPending
+	case "completed":
+		return consts.StatusCompleted
+	case "cancelled":
+		return consts.StatusFailed
+	case "timedout":
+		return consts.StatusExpired
+	default:
+		normalized := strings.ToUpper(strings.TrimSpace(status))
+		if normalized == "" {
+			return consts.StatusPending
+		}
+		return types.PaymentStatus(normalized)
+	}
 }

@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/consts"
 	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
+	"github.com/dracocity/draco-payment-bridge-core/internal/types"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/bitpay/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/bitpay/types/response"
 )
@@ -104,11 +107,24 @@ func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePayme
 }
 
 func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	return &models.CreatePaymentResponse{}, nil
+	return nil, errors.New("be using this feature on my self-hosted page(bitpay)")
 }
 
-func (b *bitpayPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
-	return &models.GetPaymentResponse{}, nil
+func (b *bitpayPG) GetPayment(ctx context.Context, invoiceID string) (*models.GetPaymentResponse, error) {
+	var resp response.RetrieveInvoice
+	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, nil, &resp); err != nil {
+		return nil, err
+	}
+	return &models.GetPaymentResponse{
+		Status:         normalizeBitPayStatus(resp.Data.Status),
+		ProviderStatus: strings.TrimSpace(resp.Data.Status),
+		PaymentID:      strings.TrimSpace(resp.Data.ID),
+		OrderID:        strings.TrimSpace(resp.Data.OrderID),
+		Currency:       strings.ToUpper(strings.TrimSpace(resp.Data.Currency)),
+		Amount:         resp.Data.Price.String(),
+		CreatedAt:      resp.Data.InvoiceTime,
+		Raw:            resp,
+	}, nil
 }
 
 func (b *bitpayPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
@@ -120,4 +136,27 @@ func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, headers ma
 		Accepted: true,
 		Message:  "webhook received",
 	}, nil
+}
+
+func normalizeBitPayStatus(status string) types.PaymentStatus {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "new":
+		return consts.StatusCreated
+	case "paid":
+		return consts.StatusPending
+	case "confirmed":
+		return consts.StatusConfirming
+	case "complete":
+		return consts.StatusCompleted
+	case "expired":
+		return consts.StatusExpired
+	case "invalid":
+		return consts.StatusFailed
+	default:
+		normalized := strings.ToUpper(strings.TrimSpace(status))
+		if normalized == "" {
+			return consts.StatusPending
+		}
+		return types.PaymentStatus(normalized)
+	}
 }

@@ -1,10 +1,6 @@
 package response
 
 import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/dracocity/draco-payment-bridge-core/pkg/utils"
 	"github.com/shopspring/decimal"
 )
 
@@ -63,8 +59,8 @@ type CreateInvoicePayment struct {
 
 // GetPayment
 type GetPayment struct {
-	PaymentID        string           `json:"payment_id"`
-	InvoiceID        *string          `json:"invoice_id"`
+	PaymentID        int64            `json:"payment_id"`
+	InvoiceID        *int64           `json:"invoice_id"`
 	PaymentStatus    string           `json:"payment_status"`
 	PayAddress       string           `json:"pay_address"`
 	PayinExtraID     *string          `json:"payin_extra_id"`
@@ -75,50 +71,14 @@ type GetPayment struct {
 	PayCurrency      string           `json:"pay_currency"`
 	OrderID          *string          `json:"order_id"`
 	OrderDescription *string          `json:"order_description"`
-	PurchaseID       string           `json:"purchase_id"`
-	OutcomeAmount    decimal.Decimal  `json:"outcome_amount"`
+	PurchaseID       int64            `json:"purchase_id"`
+	OutcomeAmount    *decimal.Decimal `json:"outcome_amount"`
 	OutcomeCurrency  string           `json:"outcome_currency"`
 	PayoutHash       *string          `json:"payout_hash"`
 	PayinHash        *string          `json:"payin_hash"`
 	CreatedAt        string           `json:"created_at"`
 	UpdatedAt        string           `json:"updated_at"`
-	BurningPercent   *decimal.Decimal `json:"burning_percent"`
+	BurningPercent   string           `json:"burning_percent"`
 	Type             string           `json:"type"`
-	PaymentExtraIDs  []string         `json:"payment_extra_ids"`
-}
-
-func (r *GetPayment) UnmarshalJSON(data []byte) error {
-	type alias GetPayment
-	aux := struct {
-		PaymentID       any   `json:"payment_id"`
-		InvoiceID       any   `json:"invoice_id"`
-		PurchaseID      any   `json:"purchase_id"`
-		BurningPercent  any   `json:"burning_percent"`
-		PaymentExtraIDs []any `json:"payment_extra_ids"`
-		*alias
-	}{
-		alias: (*alias)(r),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	r.PaymentID = utils.ToString(aux.PaymentID)
-	r.InvoiceID = utils.ToPtrString(aux.InvoiceID)
-	r.PurchaseID = utils.ToString(aux.PurchaseID)
-	burningPercent, err := utils.ToPtrDecimal(aux.BurningPercent)
-	if err != nil {
-		return fmt.Errorf("invalid burning_percent (%v): %w", aux.BurningPercent, err)
-	}
-	r.BurningPercent = burningPercent
-
-	for _, paymentExtraID := range aux.PaymentExtraIDs {
-		id := utils.ToString(paymentExtraID)
-		if id == "" {
-			continue
-		}
-		r.PaymentExtraIDs = append(r.PaymentExtraIDs, id)
-	}
-
-	return nil
+	PaymentExtraIDs  []int64          `json:"payment_extra_ids"`
 }
