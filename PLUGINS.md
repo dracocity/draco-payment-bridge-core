@@ -5,25 +5,25 @@ This project loads payment provider integrations as Go plugins (`.so`). Each plu
 - Be built with `-buildmode=plugin`.
 - Use `package main`.
 - Export a `New() plugin.Plugin` function.
-- Implement `plugin.Plugin` and return a `bridge.Bridge`.
+- Implement `internal/plugin.Plugin` and return `pg.PaymentGateway`.
 
 ## Interface Overview
 
 ```go
 // internal/plugin/plugin.go
 // type Plugin interface {
-//     New() error
-//     Load() error
+//     Load(cfg config.PGConfig) error
 //     Unload() error
-//     GetName() string
-//     Bridge() bridge.Bridge
+//     Name() string
+//     PaymentGateway() pg.PaymentGateway
 // }
 
-// internal/bridge/interface.go
-// type Bridge interface {
+// internal/pg/interface.go
+// type PaymentGateway interface {
 //     Name() string
+//     CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error)
 //     CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error)
-//     GetStatus(ctx context.Context, paymentID string) (*models.PaymentStatusResponse, error)
+//     GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error)
 //     Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error)
 //     HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error)
 // }
@@ -35,42 +35,55 @@ This project loads payment provider integrations as Go plugins (`.so`). Each plu
 package main
 
 import (
-    "os"
+    "context"
 
-    "github.com/dracocity/draco-payment-bridge-core/internal/bridge"
+    "github.com/dracocity/draco-payment-bridge-core/internal/config"
     "github.com/dracocity/draco-payment-bridge-core/internal/models"
+    "github.com/dracocity/draco-payment-bridge-core/internal/pg"
     "github.com/dracocity/draco-payment-bridge-core/internal/plugin"
 )
 
 type samplePlugin struct {
-    apiKey string
-    bridge *sampleBridge
+    gateway *samplePG
 }
 
-type sampleBridge struct{}
+type samplePG struct{}
 
 func New() plugin.Plugin { return &samplePlugin{} }
 
-func (p *samplePlugin) Load() error {
-    p.apiKey = os.Getenv("SAMPLE_API_KEY")
-    p.bridge = &sampleBridge{}
+func (p *samplePlugin) Load(cfg config.PGConfig) error {
+    // cfg["api_key"], cfg["mode"] ...
+    p.gateway = &samplePG{}
     return nil
 }
 
 func (p *samplePlugin) Unload() error { return nil }
 
-func (p *samplePlugin) GetName() string { return "sample" }
+func (p *samplePlugin) Name() string { return "sample" }
 
-func (p *samplePlugin) Bridge() bridge.Bridge { return p.bridge }
+func (p *samplePlugin) PaymentGateway() pg.PaymentGateway { return p.gateway }
 
-func (b *sampleBridge) Name() string { return "sample" }
+func (g *samplePG) Name() string { return "sample" }
 
-func (b *sampleBridge) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-    // TODO: implement provider API call
+func (g *samplePG) CreatePaymentLink(ctx context.Context, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error) {
     return nil, nil
 }
 
-// Implement GetStatus, Refund, HandleWebhook...
+func (g *samplePG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
+    return nil, nil
+}
+
+func (g *samplePG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
+    return nil, nil
+}
+
+func (g *samplePG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
+    return nil, nil
+}
+
+func (g *samplePG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+    return nil, nil
+}
 ```
 
 ## Build Plugins
@@ -79,4 +92,11 @@ func (b *sampleBridge) CreatePayment(ctx context.Context, req models.CreatePayme
 ./scripts/build-plugins.sh
 ```
 
-Plugins are loaded from `PLUGIN_DIR` (default `./plugins/dist`).
+The build script outputs plugins to `./dist/release/plugins`.
+
+## Runtime Plugin Directory
+
+Runtime plugin loading path is configured by `plugin_dir` in `config.toml`.
+
+- Default: `./plugins`
+- If you use `./scripts/build-plugins.sh`, set `plugin_dir = "./dist/release/plugins"`
