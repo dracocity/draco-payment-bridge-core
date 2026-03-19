@@ -183,42 +183,7 @@ func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*mode
 		expectedAmount = resp.PriceAmount
 	}
 
-	paidAmount := resp.ActuallyPaid
-	remainingAmount := expectedAmount.Sub(paidAmount)
-	if remainingAmount.IsNegative() {
-		remainingAmount = remainingAmount.Abs()
-	} else {
-		remainingAmount = remainingAmount.Round(16)
-	}
-
-	overpaidAmount := paidAmount.Sub(expectedAmount)
-	if overpaidAmount.IsNegative() {
-		overpaidAmount = overpaidAmount.Neg()
-	} else {
-		overpaidAmount = overpaidAmount.Round(16)
-	}
-
-	if paidAmount.LessThanOrEqual(expectedAmount) {
-		overpaidAmount = overpaidAmount.Sub(overpaidAmount)
-	}
-
-	if paidAmount.GreaterThanOrEqual(expectedAmount) {
-		remainingAmount = remainingAmount.Sub(remainingAmount)
-	}
-
 	createdAt := utils.ToUnixMilli(resp.CreatedAt)
-	updatedAt := utils.ToUnixMilli(resp.UpdatedAt)
-	if updatedAt == 0 {
-		updatedAt = createdAt
-	}
-
-	transactionHash := ""
-	if resp.PayinHash != nil {
-		transactionHash = strings.TrimSpace(*resp.PayinHash)
-	}
-	if transactionHash == "" && resp.PayoutHash != nil {
-		transactionHash = strings.TrimSpace(*resp.PayoutHash)
-	}
 
 	currency := strings.ToUpper(strings.TrimSpace(resp.PayCurrency))
 	if currency == "" {
@@ -226,22 +191,14 @@ func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*mode
 	}
 
 	return &models.GetPaymentResponse{
-		Status:          normalizeNowPaymentsStatus(resp.PaymentStatus),
-		PaymentID:       strconv.FormatInt(resp.PaymentID, 10),
-		OrderID:         orderID,
-		Currency:        currency,
-		Amount:          expectedAmount.String(),
-		FiatCurrency:    strings.ToUpper(strings.TrimSpace(resp.PriceCurrency)),
-		FiatAmount:      resp.PriceAmount.String(),
-		DepositAddress:  strings.TrimSpace(resp.PayAddress),
-		Memo:            resp.PayinExtraID,
-		TransactionHash: transactionHash,
-		PaidAmount:      paidAmount.String(),
-		RemainingAmount: remainingAmount.String(),
-		OverpaidAmount:  overpaidAmount.String(),
-		CreatedAt:       createdAt,
-		UpdatedAt:       updatedAt,
-		Raw:             resp,
+		Status:         normalizeNowPaymentsStatus(resp.PaymentStatus),
+		ProviderStatus: strings.TrimSpace(resp.PaymentStatus),
+		PaymentID:      strconv.FormatInt(resp.PaymentID, 10),
+		OrderID:        orderID,
+		Currency:       currency,
+		Amount:         expectedAmount.String(),
+		CreatedAt:      createdAt,
+		Raw:            resp,
 	}, nil
 }
 

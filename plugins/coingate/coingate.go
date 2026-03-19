@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/consts"
 	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
+	"github.com/dracocity/draco-payment-bridge-core/internal/types"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/coingate/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/coingate/types/response"
 )
@@ -117,7 +120,26 @@ func (b *coingatePG) GetPayment(ctx context.Context, orderID string) (*models.Ge
 	if err := b.client.Get(ctx, "/orders/"+orderID, nil, nil, &resp); err != nil {
 		return nil, err
 	}
-	return &models.GetPaymentResponse{}, nil
+
+	amount := strings.TrimSpace(resp.PayAmount)
+	if amount == "" {
+		amount = strings.TrimSpace(resp.PriceAmount)
+	}
+	currency := strings.ToUpper(strings.TrimSpace(resp.PayCurrency))
+	if currency == "" {
+		currency = strings.ToUpper(strings.TrimSpace(resp.PriceCurrency))
+	}
+
+	return &models.GetPaymentResponse{
+		Status:         normalizeCoinGateStatus(resp.Status),
+		ProviderStatus: strings.TrimSpace(resp.Status),
+		PaymentID:      strconv.FormatInt(resp.ID, 10),
+		OrderID:        strings.TrimSpace(resp.OrderID),
+		Currency:       currency,
+		Amount:         amount,
+		CreatedAt:      toUnixMilli(resp.CreatedAt),
+		Raw:            resp,
+	}, nil
 }
 
 func (b *coingatePG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
@@ -141,4 +163,29 @@ func toUnixMilli(datetime string) int64 {
 	}
 
 	return 0
+}
+
+func normalizeCoinGateStatus(status string) types.PaymentStatus {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "new":
+		return consts.StatusCreated
+	case "pending":
+		return consts.StatusPending
+	case "confirming":
+		return consts.StatusConfirming
+	case "paid":
+		return consts.StatusCompleted
+	case "partially_paid":
+		return consts.StatusPartiallyPaid
+	case "invalid":
+		return consts.StatusFailed
+	case "expired":
+		return consts.StatusExpired
+	default:
+		normalized := strings.ToUpper(strings.TrimSpace(status))
+		if normalized == "" {
+			return consts.StatusPending
+		}
+		return types.PaymentStatus(normalized)
+	}
 }
