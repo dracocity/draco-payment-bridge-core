@@ -68,10 +68,7 @@ go run ./cmd/dpbc -c ./config.toml
 
 ```toml
 plugin_dir = "./dist/release/plugins"
-
-[[listen]]
-network = "tcp"     # tcp | unix
-address = ":8080"   # 예: 127.0.0.1:8080, /tmp/dpbc.sock
+listen = "tcp@127.0.0.1:8080,unix@/tmp/dpbc.sock"
 
 [providers.nowpayments]
 mode = "sandbox"

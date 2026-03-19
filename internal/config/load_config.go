@@ -21,14 +21,6 @@ func Load(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to process environment variables: %w", err)
 	}
 
-	if len(cfg.Listen) == 0 && strings.TrimSpace(cfg.ListenEnv) != "" {
-		listenFromEnv, err := parseListenEnv(cfg.ListenEnv)
-		if err != nil {
-			return nil, err
-		}
-		cfg.Listen = listenFromEnv
-	}
-
 	// Apply providers config from environment variables.
 	applyProviderEnv(cfg)
 
@@ -41,7 +33,16 @@ func Load(configPath string) (*Config, error) {
 		}
 	}
 
-	listen, err := normalizeListenConfig(cfg.Listen)
+	var listenEntries []ListenConfig
+	if strings.TrimSpace(cfg.ListenRaw) != "" {
+		var err error
+		listenEntries, err = parseListenRaw(cfg.ListenRaw)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	listen, err := normalizeListenConfig(listenEntries)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +71,10 @@ func Load(configPath string) (*Config, error) {
 	return cfg, nil
 }
 
-func parseListenEnv(raw string) ([]ListenConfig, error) {
+func parseListenRaw(raw string) ([]ListenConfig, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return nil, fmt.Errorf("invalid listen env: value is empty")
+		return nil, fmt.Errorf("invalid listen config: value is empty")
 	}
 
 	entries := strings.Split(raw, ",")
@@ -86,13 +87,13 @@ func parseListenEnv(raw string) ([]ListenConfig, error) {
 
 		network, address, found := strings.Cut(entry, "@")
 		if !found {
-			return nil, fmt.Errorf("invalid listen env entry '%s': expected network@address", entry)
+			return nil, fmt.Errorf("invalid listen entry '%s': expected network@address", entry)
 		}
 
 		network = strings.TrimSpace(network)
 		address = strings.TrimSpace(address)
 		if network == "" || address == "" {
-			return nil, fmt.Errorf("invalid listen env entry '%s': network and address are required", entry)
+			return nil, fmt.Errorf("invalid listen entry '%s': network and address are required", entry)
 		}
 
 		listen = append(listen, ListenConfig{
@@ -102,20 +103,20 @@ func parseListenEnv(raw string) ([]ListenConfig, error) {
 	}
 
 	if len(listen) == 0 {
-		return nil, fmt.Errorf("invalid listen env: no valid entries")
+		return nil, fmt.Errorf("invalid listen config: no valid entries")
 	}
 
 	return listen, nil
 }
 
-func normalizeListenConfig(raw []ListenConfig) ([]ListenConfig, error) {
-	if len(raw) == 0 {
-		raw = []ListenConfig{{Network: "unix", Address: "/tmp/dpbc.sock"}}
+func normalizeListenConfig(listenEntries []ListenConfig) ([]ListenConfig, error) {
+	if len(listenEntries) == 0 {
+		listenEntries = []ListenConfig{{Network: "unix", Address: "/tmp/dpbc.sock"}}
 	}
 
-	normalized := make([]ListenConfig, 0, len(raw))
-	seen := make(map[string]struct{}, len(raw))
-	for _, entry := range raw {
+	normalized := make([]ListenConfig, 0, len(listenEntries))
+	seen := make(map[string]struct{}, len(listenEntries))
+	for _, entry := range listenEntries {
 		network := strings.ToLower(strings.TrimSpace(entry.Network))
 		address := strings.TrimSpace(entry.Address)
 

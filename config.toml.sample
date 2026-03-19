@@ -1,10 +1,5 @@
 plugin_dir = "./plugins"
-# ENV fallback when [listen] is omitted:
-# DPBC_LISTEN="tcp@127.0.0.1:8080,unix@/tmp/dpbc.sock"
-
-[[listen]]
-network = "tcp" # tcp | unix
-address = ":8080" # (tcp) => 127.0.0.1:8080 | (unix) => /tmp/app.sock 
+listen = "tcp@127.0.0.1:8080,unix@/tmp/dpbc.sock" # network@address, comma-separated
 
 [log]
 level = "info" # debug | info | warn | error
