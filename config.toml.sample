@@ -24,7 +24,8 @@ http_timeout = "20s"
 
 [providers.bitpay]
 mode = "sandbox" # production | sandbox
-api_token = "BITPAY-API-TOKEN"
+api_token = "BITPAY-API-TOKEN" # merchant facade type
+api_private_key = "BITPAY-PRIVATE-KEY" # merchant facade type (hex)
 http_timeout = "20s"
 
 [providers.coingate]

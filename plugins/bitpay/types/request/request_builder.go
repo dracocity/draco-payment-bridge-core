@@ -1,13 +1,49 @@
 package request
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	"github.com/dracocity/draco-payment-bridge-core/pkg/crypto"
 )
+
+func BuildRequestHeader(privKey *secp256k1.PrivateKey, baseURL, path string, query url.Values, payload any) (http.Header, error) {
+	requestURL := strings.TrimRight(baseURL, "/") + "/" + strings.TrimLeft(path, "/")
+	if encodedQuery := query.Encode(); encodedQuery != "" {
+		requestURL += "?" + encodedQuery
+	}
+
+	var buf bytes.Buffer
+	if payload != nil {
+		// Preserve previous behavior: skip body serialization when payload is an empty string.
+		if s, ok := payload.(string); !ok || s != "" {
+			enc := json.NewEncoder(&buf)
+			enc.SetEscapeHTML(false)
+			if err := enc.Encode(payload); err != nil {
+				return nil, err
+			}
+		}
+	}
+	payloadMessage := strings.TrimRight(buf.String(), "\n")
+
+	message := requestURL + payloadMessage
+
+	signature, err := crypto.GenerateECDSASignature(message, privKey)
+	if err != nil {
+		return nil, fmt.Errorf("generate ecdsa signature: %w", err)
+	}
+
+	return http.Header{
+		"X-Signature": []string{signature},
+	}, nil
+}
 
 func BuildCreateInvoice(req models.CreatePaymentLinkRequest, apiToken string) (*CreateInvoice, error) {
 	price, err := strconv.ParseFloat(strings.TrimSpace(req.Amount), 64)
