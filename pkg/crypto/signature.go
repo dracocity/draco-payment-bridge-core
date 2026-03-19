@@ -1,30 +1,36 @@
 package crypto
 
 import (
+	"crypto/ecdsa"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
-func GenerateSignature(payload any, secret string, encoding string) (string, error) {
-	mac := hmac.New(sha256.New, []byte(secret))
-
+func GenerateHMACSignature(payload any, secret string, encoding string) (string, error) {
+	var data []byte
 	switch v := payload.(type) {
 	case nil:
 	case []byte:
-		_, _ = mac.Write(v)
+		data = v
 	case string:
-		_, _ = mac.Write([]byte(v))
+		data = []byte(v)
 	default:
 		b, err := json.Marshal(v)
 		if err != nil {
 			return "", err
 		}
-		_, _ = mac.Write(b)
+		data = b
 	}
+
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write(data)
 
 	var sig string
 	switch encoding {
@@ -38,10 +44,35 @@ func GenerateSignature(payload any, secret string, encoding string) (string, err
 	return sig, nil
 }
 
-func VerifySignature(payload any, signature string, secret string, encoding string) (bool, error) {
-	expected, err := GenerateSignature(payload, secret, encoding)
+func VerifyHMACSignature(payload any, signature string, secret string, encoding string) (bool, error) {
+	expected, err := GenerateHMACSignature(payload, secret, encoding)
 	if err != nil {
 		return false, err
 	}
 	return hmac.Equal([]byte(expected), []byte(signature)), nil
+}
+
+func GenerateECDSASignature(payload any, privKey *secp256k1.PrivateKey) (string, error) {
+	var data []byte
+	switch v := payload.(type) {
+	case nil:
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		b, err := json.Marshal(v)
+		if err != nil {
+			return "", err
+		}
+		data = b
+	}
+
+	hash := sha256.Sum256([]byte(data))
+	sig, err := ecdsa.SignASN1(rand.Reader, privKey.ToECDSA(), hash[:])
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(sig), nil
 }

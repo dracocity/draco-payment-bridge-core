@@ -91,7 +91,7 @@ func TestGetPayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 		t.Fatalf("Load returned error: %v", err)
 	}
 
-	invoiceID := "EPgNN2saS9M7jADxRp4YfV"
+	invoiceID := "DFbK1dQ4G9n39ZB4Cv3XJZ"
 	resp, err := p.pg.GetPayment(context.Background(), invoiceID)
 	if err != nil {
 		t.Fatalf("GetPayment returned error: %v", err)

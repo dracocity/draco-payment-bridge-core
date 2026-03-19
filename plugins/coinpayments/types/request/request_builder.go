@@ -36,9 +36,9 @@ func BuildRequestHeader(clientID, clientSecret, method, baseURL, path string, qu
 
 	message := "\ufeff" + strings.ToUpper(method) + requestURL + clientID + timestamp + payloadMessage
 
-	signature, err := crypto.GenerateSignature(message, clientSecret, "base64")
+	signature, err := crypto.GenerateHMACSignature(message, clientSecret, "base64")
 	if err != nil {
-		return nil, fmt.Errorf("generate signature: %w", err)
+		return nil, fmt.Errorf("generate hmac signature: %w", err)
 	}
 
 	return http.Header{

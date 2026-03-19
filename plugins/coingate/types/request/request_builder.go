@@ -63,9 +63,9 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 		r.Shopper = &CreateOrderShopper{Email: req.BuyerEmail}
 	}
 
-	signature, err := crypto.GenerateSignature(r, callbackSecret, "hex")
+	signature, err := crypto.GenerateHMACSignature(r, callbackSecret, "hex")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("generate ecdsa signature: %w", err)
 	}
 	r.Token = signature
 

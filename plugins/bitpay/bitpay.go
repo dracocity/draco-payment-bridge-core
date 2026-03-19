@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
 	"github.com/dracocity/draco-payment-bridge-core/internal/consts"
 	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
@@ -30,8 +32,10 @@ type bitpayPlugin struct {
 }
 
 type bitpayPG struct {
-	client   *httpx.Client
-	apiToken string
+	client     *httpx.Client
+	baseURL    string
+	apiToken   string
+	apiPrivKey *secp256k1.PrivateKey
 }
 
 func New() plugin.Plugin {
@@ -52,6 +56,15 @@ func (p *bitpayPlugin) Load(cfg config.PGConfig) error {
 	if apiToken == "" {
 		return errors.New("bitpay api_token is required")
 	}
+	var apiPrivKey *secp256k1.PrivateKey
+	if privKeyStr := strings.TrimSpace(cfg["api_private_key"]); privKeyStr == "" {
+		return errors.New("bitpay api_private_key is required")
+	} else if privKeyBytes, err := hex.DecodeString(privKeyStr); err != nil {
+		return fmt.Errorf("invalid api_private_key: %w", err)
+	} else {
+		apiPrivKey = secp256k1.PrivKeyFromBytes(privKeyBytes)
+	}
+	apiPubKeyHex := hex.EncodeToString(apiPrivKey.PubKey().SerializeCompressed())
 	timeout := 7 * time.Second
 	if timeoutStr := strings.TrimSpace(cfg["http_timeout"]); timeoutStr != "" {
 		parsedTimeout, err := time.ParseDuration(timeoutStr)
@@ -68,10 +81,13 @@ func (p *bitpayPlugin) Load(cfg config.PGConfig) error {
 				"Content-Type":     []string{"application/json"},
 				"X-Accept-Version": []string{"2.0.0"},
 				"Accept":           []string{"application/json"},
+				"X-Identity":       []string{apiPubKeyHex},
 			},
 			ErrorPrefix: "bitpay",
 		}),
-		apiToken: apiToken,
+		baseURL:    baseURL,
+		apiToken:   apiToken,
+		apiPrivKey: apiPrivKey,
 	}
 	return nil
 }
@@ -97,9 +113,13 @@ func (b *bitpayPG) CreatePaymentLink(ctx context.Context, req models.CreatePayme
 	if err != nil {
 		return nil, err
 	}
+	header, err := request.BuildRequestHeader(b.apiPrivKey, b.baseURL, "/invoices", nil, body)
+	if err != nil {
+		return nil, err
+	}
 
 	var resp response.CreateInvoice
-	if err := b.client.Post(ctx, "/invoices", nil, body, &resp); err != nil {
+	if err := b.client.Post(ctx, "/invoices", header, body, &resp); err != nil {
 		return nil, err
 	}
 
@@ -111,8 +131,12 @@ func (b *bitpayPG) CreatePayment(ctx context.Context, req models.CreatePaymentRe
 }
 
 func (b *bitpayPG) GetPayment(ctx context.Context, invoiceID string) (*models.GetPaymentResponse, error) {
+	header, err := request.BuildRequestHeader(b.apiPrivKey, b.baseURL, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, nil)
+	if err != nil {
+		return nil, err
+	}
 	var resp response.RetrieveInvoice
-	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, nil, &resp); err != nil {
+	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, header, &resp); err != nil {
 		return nil, err
 	}
 	return &models.GetPaymentResponse{

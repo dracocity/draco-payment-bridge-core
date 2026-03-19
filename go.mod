@@ -5,6 +5,7 @@ go 1.25
 toolchain go1.25.6
 
 require (
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1
 	github.com/gin-gonic/gin v1.11.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pelletier/go-toml/v2 v2.2.4
