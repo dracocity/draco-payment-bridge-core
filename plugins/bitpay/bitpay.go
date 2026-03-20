@@ -12,12 +12,10 @@ import (
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
-	"github.com/dracocity/draco-payment-bridge-core/internal/consts"
 	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
-	"github.com/dracocity/draco-payment-bridge-core/internal/types"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/bitpay/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/bitpay/types/response"
 )
@@ -139,20 +137,22 @@ func (b *bitpayPG) GetPayment(ctx context.Context, invoiceID string) (*models.Ge
 	if err := b.client.Get(ctx, "/invoices/"+invoiceID, url.Values{"token": []string{b.apiToken}}, header, &resp); err != nil {
 		return nil, err
 	}
-	return &models.GetPaymentResponse{
-		Status:         normalizeBitPayStatus(resp.Data.Status),
-		ProviderStatus: strings.TrimSpace(resp.Data.Status),
-		PaymentID:      strings.TrimSpace(resp.Data.ID),
-		OrderID:        strings.TrimSpace(resp.Data.OrderID),
-		Currency:       strings.ToUpper(strings.TrimSpace(resp.Data.Currency)),
-		Amount:         resp.Data.Price.String(),
-		CreatedAt:      resp.Data.InvoiceTime,
-		Raw:            resp,
-	}, nil
+	return response.BuildGetPayment(resp)
 }
 
-func (b *bitpayPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	return &models.RefundResponse{}, nil
+func (b *bitpayPG) CreateRefund(ctx context.Context, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
+	body := request.BuildCreateRefundRequest(req, b.apiToken)
+	header, err := request.BuildRequestHeader(b.apiPrivKey, b.baseURL, "/refunds", nil, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp response.CreateRefundRequest
+	if err := b.client.Post(ctx, "/refunds", header, body, &resp); err != nil {
+		return nil, err
+	}
+
+	return response.BuildCreateRefund(resp, req.PaymentID)
 }
 
 func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
@@ -160,27 +160,4 @@ func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, headers ma
 		Accepted: true,
 		Message:  "webhook received",
 	}, nil
-}
-
-func normalizeBitPayStatus(status string) types.PaymentStatus {
-	switch strings.ToLower(strings.TrimSpace(status)) {
-	case "new":
-		return consts.StatusCreated
-	case "paid":
-		return consts.StatusPending
-	case "confirmed":
-		return consts.StatusConfirming
-	case "complete":
-		return consts.StatusCompleted
-	case "expired":
-		return consts.StatusExpired
-	case "invalid":
-		return consts.StatusFailed
-	default:
-		normalized := strings.ToUpper(strings.TrimSpace(status))
-		if normalized == "" {
-			return consts.StatusPending
-		}
-		return types.PaymentStatus(normalized)
-	}
 }
