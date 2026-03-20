@@ -153,8 +153,8 @@ func (b *coinpaymentsPG) GetPayment(ctx context.Context, invoiceID string) (*mod
 	}, nil
 }
 
-func (b *coinpaymentsPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	return &models.RefundResponse{}, nil
+func (b *coinpaymentsPG) CreateRefund(ctx context.Context, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
+	return &models.CreateRefundResponse{}, nil
 }
 
 func (b *coinpaymentsPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {

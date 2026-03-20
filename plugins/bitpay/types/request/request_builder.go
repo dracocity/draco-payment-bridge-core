@@ -108,3 +108,12 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest, apiToken string) (*
 
 	return r, nil
 }
+
+func BuildCreateRefundRequest(req models.CreateRefundRequest, apiToken string) *CreateRefundRequest {
+	return &CreateRefundRequest{
+		Amount:    req.Amount,
+		InvoiceID: strings.TrimSpace(req.PaymentID),
+		Token:     apiToken,
+		Reference: strings.TrimSpace(req.Reason),
+	}
+}

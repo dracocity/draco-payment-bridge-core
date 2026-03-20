@@ -105,16 +105,15 @@ type GetPaymentResponse struct {
 	Raw            any                 `json:"raw,omitempty"`
 }
 
-// RefundRequest is the unified refund request payload.
-type RefundRequest struct {
-	Provider  string  `json:"provider"`
+// CreateRefundRequest is the unified refund request payload.
+type CreateRefundRequest struct {
 	PaymentID string  `json:"payment_id"`
 	Amount    float64 `json:"amount"`
 	Reason    string  `json:"reason"`
 }
 
-// RefundResponse represents the unified refund response.
-type RefundResponse struct {
+// CreateRefundResponse represents the unified refund response.
+type CreateRefundResponse struct {
 	Success    bool   `json:"success"`
 	RefundID   string `json:"refund_id"`
 	PaymentID  string `json:"payment_id"`

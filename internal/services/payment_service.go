@@ -71,16 +71,16 @@ func (s *PaymentService) GetPayment(ctx context.Context, provider, paymentID str
 	return resp, nil
 }
 
-func (s *PaymentService) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	p, ok := s.pgRegistry.Get(req.Provider)
+func (s *PaymentService) CreateRefund(ctx context.Context, provider string, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
+	p, ok := s.pgRegistry.Get(provider)
 	if !ok {
 		return nil, ErrUnknownProvider
 	}
 
-	resp, err := p.Refund(ctx, req)
+	resp, err := p.CreateRefund(ctx, req)
 	if err != nil {
-		s.logger.Warn("failed to refund payment", "provider", req.Provider, "error", err)
-		return nil, fmt.Errorf("refund payment: %w", err)
+		s.logger.Warn("failed to create refund", "provider", provider, "error", err)
+		return nil, fmt.Errorf("create refund: %w", err)
 	}
 	return resp, nil
 }

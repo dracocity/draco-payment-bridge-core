@@ -1,6 +1,6 @@
 package request
 
-// CreateInvoice
+// Create an Invoice
 type CreateInvoice struct {
 	CreateInvoicePayload
 	Token           string  `json:"token"`                     // The API token can be retrieved from the dashboard (limited to pos facade) or using the Tokens resource to get access to the merchant facade. This is described in the section Request an API token).
@@ -12,6 +12,7 @@ type CreateInvoice struct {
 	RedirectURL     string  `json:"redirectURL,omitempty"`     // The shopper will be redirected to this URL when clicking on the Return button after a successful payment or when clicking on the Close button if a separate closeURL is not specified. Be sure to include "http://" or "https://" in the url.
 	CloseURL        string  `json:"closeURL,omitempty"`        // URL to redirect if the shopper does not pay the invoice and click on the Close button instead. Be sure to include "http://" or "https://" in the url.
 }
+
 type CreateInvoicePayload struct {
 	BitpayIdRequired                       *bool                         `json:"bitpayIdRequired,omitempty"`                       // Forces the invoice to require BitPay ID to be completed, regardless of price.
 	MerchantName                           string                        `json:"merchantName,omitempty"`                           // Display string for merchant identification (ex. Wal-Mart Store #1452, Bowling Green, KY).
@@ -50,4 +51,16 @@ type CreateInvoiceBuyer struct {
 	Email      string `json:"email"`      // Buyer's email address. If provided during invoice creation, this will bypass the email prompt for the consumer when opening the invoice.
 	Phone      string `json:"phone"`      // Buyer's phone number
 	Notify     bool   `json:"notify"`     // Indicates whether a BitPay email confirmation should be sent to the buyer once he has paid the invoice
+}
+
+// Create a Refund Request
+type CreateRefundRequest struct {
+	Amount             float64 `json:"amount"`              // The amount to be refunded, denominated in the invoice original currency - partial refunds are supported
+	InvoiceID          string  `json:"invoiceId"`           // The ID of the invoice to refund.
+	Token              string  `json:"token"`               // The API token used when originally creating the invoice.
+	Preview            bool    `json:"preview"`             // Whether to create the refund request as a preview (which will not be acted on until status is updated) - parameter defaults to false if not passed.
+	Immediate          bool    `json:"immediate"`           // Whether funds should be removed from merchant ledger immediately on submission or at time of processing - parameter defaults to false if not passed.
+	BuyerPaysRefundFee bool    `json:"buyerPaysRefundFee"`  // Whether the buyer should pay the refund fee rather than the merchant - parameter defaults to false if not passed.
+	Reference          string  `json:"reference,omitempty"` // Present only if specified in the request to create the refund. This is your reference label for this refund. It will be passed-through on each response for you to identify the refund in your system. Maximum string length is 100 characters.
+	GUID               string  `json:"guid,omitempty"`      // A variable provided by the merchant and designed to be used by the merchant to correlate the refund with a refund ID in their system.
 }

@@ -142,8 +142,8 @@ func (b *coingatePG) GetPayment(ctx context.Context, orderID string) (*models.Ge
 	}, nil
 }
 
-func (b *coingatePG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	return &models.RefundResponse{}, nil
+func (b *coingatePG) CreateRefund(ctx context.Context, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
+	return &models.CreateRefundResponse{}, nil
 }
 
 func (b *coingatePG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {

@@ -202,7 +202,7 @@ func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*mode
 	}, nil
 }
 
-func (b *nowPaymentsPG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
+func (b *nowPaymentsPG) CreateRefund(ctx context.Context, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
 	return nil, errors.New("nowpayments does not provide an API refund endpoint")
 }
 
