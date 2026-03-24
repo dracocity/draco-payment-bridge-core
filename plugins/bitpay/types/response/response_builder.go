@@ -34,14 +34,13 @@ func BuildCreatePaymentLink(resp CreateInvoice, webhookURL string) (*models.Crea
 
 func BuildGetPayment(resp RetrieveInvoice) (*models.GetPaymentResponse, error) {
 	return &models.GetPaymentResponse{
-		Status:         normalizeBitPayStatus(resp.Data.Status),
-		ProviderStatus: strings.TrimSpace(resp.Data.Status),
-		PaymentID:      strings.TrimSpace(resp.Data.ID),
-		OrderID:        strings.TrimSpace(resp.Data.OrderID),
-		Currency:       strings.ToUpper(strings.TrimSpace(resp.Data.Currency)),
-		Amount:         resp.Data.Price.String(),
-		CreatedAt:      resp.Data.InvoiceTime,
-		Raw:            resp,
+		Status:    normalizeBitPayStatus(resp.Data.Status),
+		PaymentID: strings.TrimSpace(resp.Data.ID),
+		OrderID:   strings.TrimSpace(resp.Data.OrderID),
+		Currency:  strings.ToUpper(strings.TrimSpace(resp.Data.Currency)),
+		Amount:    resp.Data.Price.String(),
+		CreatedAt: resp.Data.InvoiceTime,
+		Raw:       resp,
 	}, nil
 }
 

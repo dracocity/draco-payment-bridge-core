@@ -142,14 +142,13 @@ func (b *coinpaymentsPG) GetPayment(ctx context.Context, invoiceID string) (*mod
 	}
 
 	return &models.GetPaymentResponse{
-		Status:         normalizeCoinPaymentsStatus(resp.Status),
-		ProviderStatus: strings.TrimSpace(resp.Status),
-		PaymentID:      strings.TrimSpace(resp.ID),
-		OrderID:        strings.TrimSpace(resp.InvoiceID),
-		Currency:       currency,
-		Amount:         amount,
-		CreatedAt:      toUnixMilli(resp.Created),
-		Raw:            resp,
+		Status:    normalizeCoinPaymentsStatus(resp.Status),
+		PaymentID: strings.TrimSpace(resp.ID),
+		OrderID:   strings.TrimSpace(resp.InvoiceID),
+		Currency:  currency,
+		Amount:    amount,
+		CreatedAt: toUnixMilli(resp.Created),
+		Raw:       resp,
 	}, nil
 }
 
@@ -157,7 +156,7 @@ func (b *coinpaymentsPG) CreateRefund(ctx context.Context, req models.CreateRefu
 	return &models.CreateRefundResponse{}, nil
 }
 
-func (b *coinpaymentsPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (b *coinpaymentsPG) HandleWebhook(ctx context.Context, payload []byte, header http.Header) (*models.WebhookResult, error) {
 	return &models.WebhookResult{
 		Accepted: true,
 		Message:  "webhook received",

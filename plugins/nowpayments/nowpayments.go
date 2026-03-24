@@ -3,15 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/hmac"
 	"crypto/sha512"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,7 +18,7 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
-	"github.com/dracocity/draco-payment-bridge-core/internal/types"
+	"github.com/dracocity/draco-payment-bridge-core/pkg/crypto"
 	"github.com/dracocity/draco-payment-bridge-core/pkg/utils"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/response"
@@ -172,68 +169,36 @@ func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*mode
 	if err := b.client.Get(ctx, "/payment/"+paymentID, nil, nil, &resp); err != nil {
 		return nil, err
 	}
-	// TODO: GetPaymentResponse 필드를 정리부터 해야..
-	orderID := ""
-	if resp.OrderID != nil {
-		orderID = *resp.OrderID
-	}
 
-	expectedAmount := resp.PayAmount
-	if expectedAmount.IsZero() {
-		expectedAmount = resp.PriceAmount
-	}
-
-	createdAt := utils.ToUnixMilli(resp.CreatedAt)
-
-	currency := strings.ToUpper(strings.TrimSpace(resp.PayCurrency))
-	if currency == "" {
-		currency = strings.ToUpper(strings.TrimSpace(resp.OutcomeCurrency))
-	}
-
-	return &models.GetPaymentResponse{
-		Status:         normalizeNowPaymentsStatus(resp.PaymentStatus),
-		ProviderStatus: strings.TrimSpace(resp.PaymentStatus),
-		PaymentID:      strconv.FormatInt(resp.PaymentID, 10),
-		OrderID:        orderID,
-		Currency:       currency,
-		Amount:         expectedAmount.String(),
-		CreatedAt:      createdAt,
-		Raw:            resp,
-	}, nil
+	return response.BuildGetPayment(resp)
 }
 
 func (b *nowPaymentsPG) CreateRefund(ctx context.Context, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
 	return nil, errors.New("nowpayments does not provide an API refund endpoint")
 }
 
-func (b *nowPaymentsPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
-	signature := headerValue(headers, "x-nowpayments-sig")
+func (b *nowPaymentsPG) HandleWebhook(ctx context.Context, payload []byte, header http.Header) (*models.WebhookResult, error) {
+	signature := header.Get("x-nowpayments-sig")
 	if signature == "" {
 		return nil, errors.New("missing x-nowpayments-sig header")
 	}
-	calculated, err := nowPaymentsSignature(payload, b.ipnSecret)
+
+	sortedJSON, err := sortJSONPayload(payload)
 	if err != nil {
 		return nil, err
 	}
-	if !hmac.Equal([]byte(strings.ToLower(signature)), []byte(calculated)) {
+	verified, err := crypto.VerifyHMACSignature(sortedJSON, signature, sha512.New, b.ipnSecret, "hex")
+	if err != nil {
+		return nil, err
+	}
+	if !verified {
 		return nil, errors.New("invalid nowpayments signature")
 	}
+
 	return &models.WebhookResult{
 		Accepted: true,
-		Message:  "webhook verified",
+		Message:  "verified",
 	}, nil
-}
-
-func nowPaymentsSignature(payload []byte, secret string) (string, error) {
-	sortedJSON, err := sortJSONPayload(payload)
-	if err != nil {
-		return "", err
-	}
-	mac := hmac.New(sha512.New, []byte(secret))
-	if _, err := mac.Write([]byte(sortedJSON)); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(mac.Sum(nil)), nil
 }
 
 func sortJSONPayload(payload []byte) (string, error) {
@@ -278,38 +243,4 @@ func marshalNoEscape(value interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return bytes.TrimRight(buf.Bytes(), "\n"), nil
-}
-
-func normalizeNowPaymentsStatus(status string) types.PaymentStatus {
-	switch strings.ToLower(strings.TrimSpace(status)) {
-	case "new":
-		return consts.StatusCreated
-	case "waiting":
-		return consts.StatusPending
-	case "confirming", "sending":
-		return consts.StatusConfirming
-	case "partially_paid":
-		return consts.StatusPartiallyPaid
-	case "finished", "confirmed":
-		return consts.StatusCompleted
-	case "failed", "refunded":
-		return consts.StatusFailed
-	case "expired":
-		return consts.StatusExpired
-	default:
-		normalized := strings.ToUpper(strings.TrimSpace(status))
-		if normalized == "" {
-			return consts.StatusPending
-		}
-		return types.PaymentStatus(normalized)
-	}
-}
-
-func headerValue(headers map[string][]string, name string) string {
-	for key, values := range headers {
-		if strings.EqualFold(key, name) && len(values) > 0 {
-			return strings.TrimSpace(values[0])
-		}
-	}
-	return ""
 }

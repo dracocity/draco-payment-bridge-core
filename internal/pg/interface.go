@@ -2,6 +2,7 @@ package pg
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 )
@@ -13,5 +14,5 @@ type PaymentGateway interface {
 	CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error)
 	GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error)
 	CreateRefund(ctx context.Context, req models.CreateRefundRequest) (*models.CreateRefundResponse, error)
-	HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error)
+	HandleWebhook(ctx context.Context, payload []byte, header http.Header) (*models.WebhookResult, error)
 }

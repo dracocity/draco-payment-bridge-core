@@ -155,7 +155,7 @@ func (b *bitpayPG) CreateRefund(ctx context.Context, req models.CreateRefundRequ
 	return response.BuildCreateRefund(resp, req.PaymentID)
 }
 
-func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (b *bitpayPG) HandleWebhook(ctx context.Context, payload []byte, header http.Header) (*models.WebhookResult, error) {
 	return &models.WebhookResult{
 		Accepted: true,
 		Message:  "webhook received",

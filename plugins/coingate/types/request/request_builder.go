@@ -1,6 +1,7 @@
 package request
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -63,7 +64,7 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 		r.Shopper = &CreateOrderShopper{Email: req.BuyerEmail}
 	}
 
-	signature, err := crypto.GenerateHMACSignature(r, callbackSecret, "hex")
+	signature, err := crypto.GenerateHMACSignature(r, sha256.New, callbackSecret, "hex")
 	if err != nil {
 		return nil, fmt.Errorf("generate ecdsa signature: %w", err)
 	}

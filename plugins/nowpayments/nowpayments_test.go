@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha512"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
 	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
+	pkgcrypto "github.com/dracocity/draco-payment-bridge-core/pkg/crypto"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
@@ -60,11 +62,10 @@ func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	// }
 
 	resp, err := p.pg.CreatePaymentLink(context.Background(), models.CreatePaymentLinkRequest{
-		Amount:          "3.21",
-		Currency:        "USD",
-		ReceiveCurrency: "BTC",
-		OrderID:         "SAMPLE",
-		Description:     "DESCRIPTION",
+		Amount:      "3.21",
+		Currency:    "USD",
+		OrderID:     "SAMPLE",
+		Description: "DESCRIPTION",
 		Items: []models.Item{{
 			ID:       "ItemID",
 			Name:     "ItemName",
@@ -116,4 +117,30 @@ func TestGetPayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	}
 
 	fmt.Println(resp)
+}
+
+func TestWebhook_ReceiveProcess(t *testing.T) {
+	t.Parallel()
+
+	payload := []byte(`{"actually_paid":0,"actually_paid_at_fiat":0,"fee":{"currency":"eth","depositFee":0,"serviceFee":0,"withdrawalFee":0},"invoice_id":6070266182,"order_description":"DESCRIPTION | ItemName x1 (+1 more)","order_id":"SAMPLE","outcome_amount":0.001408,"outcome_currency":"eth","parent_payment_id":null,"pay_address":"MEEim9nyiAWcDbMAqVZj6tE5xktqbSDrCJ","pay_amount":0.05716941,"pay_currency":"ltc","payin_extra_id":null,"payment_extra_ids":null,"payment_id":4492847470,"payment_status":"finished","price_amount":3.21,"price_currency":"usd","purchase_id":"6105448077","updated_at":1774390831880}`)
+	p := &nowPaymentsPG{ipnSecret: "test-secret"}
+
+	sortedPayload, err := sortJSONPayload(payload)
+	if err != nil {
+		t.Fatalf("sortJSONPayload returned error: %v", err)
+	}
+	signature, err := pkgcrypto.GenerateHMACSignature(sortedPayload, sha512.New, p.ipnSecret, "hex")
+	if err != nil {
+		t.Fatalf("GenerateHMACSignature returned error: %v", err)
+	}
+
+	header := make(http.Header)
+	header.Set("x-nowpayments-sig", signature)
+	result, err := p.HandleWebhook(context.Background(), payload, header)
+	if err != nil {
+		t.Fatalf("HandleWebhook returned error: %v", err)
+	}
+	if result == nil || !result.Accepted || result.Message != "verified" {
+		t.Fatalf("unexpected webhook result: %#v", result)
+	}
 }
