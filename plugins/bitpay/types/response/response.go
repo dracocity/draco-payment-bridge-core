@@ -1,6 +1,10 @@
 package response
 
-import "github.com/shopspring/decimal"
+import (
+	"math/big"
+
+	"github.com/shopspring/decimal"
+)
 
 // Create an Invoice
 type CreateInvoice struct {
@@ -43,8 +47,8 @@ type CreateInvoice struct {
 			SelectedWallet              string `json:"selectedWallet"`              // Wallet selected by buyer.
 			SelectedTransactionCurrency string `json:"selectedTransactionCurrency"` // Crypto currency selected by buyer.
 		} `json:"buyerProvidedInfo,omitempty"` // Buyer-provided checkout information.
-		PaymentSubtotals        map[string]int64                      `json:"paymentSubtotals,omitempty"`        // Subtotal per payment currency (usually in smallest unit).
-		PaymentTotals           map[string]int64                      `json:"paymentTotals,omitempty"`           // Total per payment currency including fees.
+		PaymentSubtotals        map[string]*big.Int                   `json:"paymentSubtotals,omitempty"`        // Subtotal per payment currency (usually in smallest unit).
+		PaymentTotals           map[string]*big.Int                   `json:"paymentTotals,omitempty"`           // Total per payment currency including fees.
 		PaymentDisplayTotals    map[string]string                     `json:"paymentDisplayTotals,omitempty"`    // Formatted total per payment currency.
 		PaymentDisplaySubTotals map[string]string                     `json:"paymentDisplaySubTotals,omitempty"` // Formatted subtotal per payment currency.
 		ExchangeRates           map[string]map[string]decimal.Decimal `json:"exchangeRates,omitempty"`           // Exchange rates matrix used for invoice pricing.
