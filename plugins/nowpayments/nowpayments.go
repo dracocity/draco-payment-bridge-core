@@ -3,12 +3,13 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
 	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
-	"github.com/dracocity/draco-payment-bridge-core/pkg/crypto"
 	"github.com/dracocity/draco-payment-bridge-core/pkg/utils"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/response"
@@ -183,15 +183,16 @@ func (b *nowPaymentsPG) HandleWebhook(ctx context.Context, payload []byte, heade
 		return nil, errors.New("missing x-nowpayments-sig header")
 	}
 
-	sortedJSON, err := sortJSONPayload(payload)
+	canonicalPayload, err := canonicalizePayload(payload)
 	if err != nil {
 		return nil, err
 	}
-	verified, err := crypto.VerifyHMACSignature(sortedJSON, signature, sha512.New, b.ipnSecret, "hex")
-	if err != nil {
-		return nil, err
-	}
-	if !verified {
+
+	digest := hmac.New(sha512.New, []byte(b.ipnSecret))
+	digest.Write(canonicalPayload)
+	expected := hex.EncodeToString(digest.Sum(nil))
+
+	if !hmac.Equal([]byte(expected), []byte(strings.ToLower(signature))) {
 		return nil, errors.New("invalid nowpayments signature")
 	}
 
@@ -201,38 +202,18 @@ func (b *nowPaymentsPG) HandleWebhook(ctx context.Context, payload []byte, heade
 	}, nil
 }
 
-func sortJSONPayload(payload []byte) (string, error) {
+func canonicalizePayload(payload []byte) ([]byte, error) {
 	var params map[string]interface{}
 	if err := json.Unmarshal(payload, &params); err != nil {
-		return "", fmt.Errorf("invalid webhook payload: %w", err)
+		return nil, fmt.Errorf("invalid webhook payload: %w", err)
 	}
 
-	keys := make([]string, 0, len(params))
-	for key := range params {
-		keys = append(keys, key)
+	canonicalPayload, err := marshalNoEscape(params)
+	if err != nil {
+		return nil, err
 	}
-	sort.Strings(keys)
 
-	var buf bytes.Buffer
-	buf.WriteByte('{')
-	for i, key := range keys {
-		if i > 0 {
-			buf.WriteByte(',')
-		}
-		keyJSON, err := marshalNoEscape(key)
-		if err != nil {
-			return "", err
-		}
-		valueJSON, err := marshalNoEscape(params[key])
-		if err != nil {
-			return "", err
-		}
-		buf.Write(keyJSON)
-		buf.WriteByte(':')
-		buf.Write(valueJSON)
-	}
-	buf.WriteByte('}')
-	return buf.String(), nil
+	return canonicalPayload, nil
 }
 
 func marshalNoEscape(value interface{}) ([]byte, error) {
@@ -242,5 +223,10 @@ func marshalNoEscape(value interface{}) ([]byte, error) {
 	if err := enc.Encode(value); err != nil {
 		return nil, err
 	}
-	return bytes.TrimRight(buf.Bytes(), "\n"), nil
+
+	encoded := buf.Bytes()
+	if n := len(encoded); n > 0 && encoded[n-1] == '\n' {
+		encoded = encoded[:n-1]
+	}
+	return encoded, nil
 }
