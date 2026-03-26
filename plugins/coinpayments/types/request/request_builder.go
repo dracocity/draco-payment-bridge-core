@@ -67,7 +67,7 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, er
 		}},
 		Payment: &CreateInvoicePayment{
 			PaymentCurrency: req.ReceiveCurrency,
-			RefundEmail:     req.BuyerEmail,
+			RefundEmail:     req.CustomerEmail,
 		},
 		SuccessURL: req.SuccessURL,
 		CancelURL:  req.CancelURL,

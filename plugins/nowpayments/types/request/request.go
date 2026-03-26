@@ -25,9 +25,9 @@ type CreateInvoicePayment struct {
 	PayCurrency      string `json:"pay_currency"`                // the crypto currency in which the pay_amount is specified (btc, eth, etc). NOTE: some of the currencies require a Memo, Destination Tag, etc., to complete a payment (AVA, EOS, BNBMAINNET, XLM, XRP). This is unique for each payment. This ID is received in “payin_extra_id” parameter of the response. Payments made without "payin_extra_id" cannot be detected automatically;=
 	OrderDescription string `json:"order_description,omitempty"` // inner store order description
 	CustomerEmail    string `json:"customer_email,omitempty"`    // user email to which a notification about the successful completion of the payment will be sent
-	PayoutAddress    string `json:"payout_address,omitempty"`    // usually the funds will go to the address you specify in your Personal account. In case you want to receive funds on another address, you can specify it in this parameter
-	PayoutExtraID    string `json:"payout_extra_id,omitempty"`   // extra id or memo or tag for external payout_address
 }
 
 type CreateInvoicePaymentPayload struct {
+	PayoutAddress string `json:"payout_address,omitempty"`  // usually the funds will go to the address you specify in your Personal account. In case you want to receive funds on another address, you can specify it in this parameter
+	PayoutExtraID string `json:"payout_extra_id,omitempty"` // extra id or memo or tag for external payout_address
 }

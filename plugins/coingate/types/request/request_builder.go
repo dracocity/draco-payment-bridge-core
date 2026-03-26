@@ -51,7 +51,7 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 		if payload.Shopper != nil {
 			s := *payload.Shopper
 			r.Shopper = &s
-			r.Shopper.Email = req.BuyerEmail
+			r.Shopper.Email = req.CustomerEmail
 
 			if payload.Shopper.CompanyDetails != nil {
 				scd := *payload.Shopper.CompanyDetails
@@ -61,7 +61,7 @@ func BuildCreateOrder(req models.CreatePaymentLinkRequest, callbackSecret string
 	}
 
 	if r.Shopper == nil {
-		r.Shopper = &CreateOrderShopper{Email: req.BuyerEmail}
+		r.Shopper = &CreateOrderShopper{Email: req.CustomerEmail}
 	}
 
 	signature, err := crypto.GenerateHMACSignature(r, sha256.New, callbackSecret, "hex")

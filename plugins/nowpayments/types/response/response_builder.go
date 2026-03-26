@@ -32,6 +32,33 @@ func BuildCreatePaymentLink(resp CreateInvoice) (*models.CreatePaymentLinkRespon
 	}, nil
 }
 
+func BuildCreatePayment(resp CreateInvoicePayment) (*models.CreatePaymentResponse, error) {
+	createdAt := utils.ToUnixMilli(resp.CreatedAt)
+	updatedAt := utils.ToUnixMilli(resp.UpdatedAt)
+	if updatedAt == 0 {
+		updatedAt = createdAt
+	}
+	expiresAt := utils.ToUnixMilli(resp.ExpirationEstimateDate)
+	if expiresAt == 0 {
+		expiresAt = createdAt + 1200000 // 20 minutes
+	}
+
+	return &models.CreatePaymentResponse{
+		Status:          normalizeNowPaymentsStatus(resp.PaymentStatus),
+		PaymentID:       resp.PaymentID,
+		Amount:          resp.PriceAmount.String(),
+		Currency:        strings.ToUpper(resp.PriceCurrency),
+		ReceiveAmount:   resp.AmountReceived.String(),
+		ReceiveCurrency: strings.ToUpper(resp.PayCurrency),
+		OrderID:         utils.PtrValueOrDefault(resp.OrderID, ""),
+		Description:     utils.PtrValueOrDefault(resp.OrderDescription, ""),
+		ExpiresAt:       expiresAt,
+		CreatedAt:       createdAt,
+		UpdatedAt:       updatedAt,
+		Raw:             resp,
+	}, nil
+}
+
 func BuildGetPayment(resp GetPayment) (*models.GetPaymentResponse, error) {
 	createdAt := utils.ToUnixMilli(resp.CreatedAt)
 	updatedAt := utils.ToUnixMilli(resp.UpdatedAt)

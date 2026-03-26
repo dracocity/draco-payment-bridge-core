@@ -14,12 +14,10 @@ import (
 	"time"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/config"
-	"github.com/dracocity/draco-payment-bridge-core/internal/consts"
 	"github.com/dracocity/draco-payment-bridge-core/internal/httpx"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 	"github.com/dracocity/draco-payment-bridge-core/internal/plugin"
-	"github.com/dracocity/draco-payment-bridge-core/pkg/utils"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/request"
 	"github.com/dracocity/draco-payment-bridge-core/plugins/nowpayments/types/response"
 )
@@ -113,12 +111,7 @@ func (b *nowPaymentsPG) CreatePaymentLink(ctx context.Context, req models.Create
 	return response.BuildCreatePaymentLink(resp)
 }
 
-// TODO: I will be using this feature on my self-hosted page.
 func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
-	if true {
-		return nil, errors.New("be using this feature on my self-hosted page(nowpayments)")
-	}
-	// TODO
 	body, err := request.BuildCreateInvoicePayment(req)
 	if err != nil {
 		return nil, err
@@ -129,39 +122,7 @@ func (b *nowPaymentsPG) CreatePayment(ctx context.Context, req models.CreatePaym
 		return nil, err
 	}
 
-	// TODO: CreatePaymentResponse 필드를 정리부터 해야..
-	orderID := req.OrderID
-	if resp.OrderID != nil {
-		orderID = *resp.OrderID
-	}
-
-	createdAt := utils.ToUnixMilli(resp.CreatedAt)
-	expiresAt := utils.ToUnixMilli(resp.ExpirationEstimateDate)
-	if expiresAt == 0 {
-		expiresAt = createdAt + 1800000 // 30 minutes
-	}
-	updatedAt := utils.ToUnixMilli(resp.UpdatedAt)
-	if updatedAt == 0 {
-		updatedAt = createdAt
-	}
-
-	return &models.CreatePaymentResponse{
-		Status:       consts.StatusPending,
-		PaymentID:    resp.PaymentID,
-		OrderID:      orderID,
-		Currency:     strings.ToUpper(resp.PayCurrency),
-		Amount:       resp.PayAmount.String(),
-		FiatCurrency: strings.ToUpper(resp.PriceCurrency),
-		FiatAmount:   resp.PriceAmount.String(),
-		Network:      resp.Network,
-		// ExchangeRate: "",
-		DepositAddress: resp.PayAddress,
-		Memo:           resp.PayinExtraID,
-		ExpiresAt:      expiresAt,
-		CreatedAt:      createdAt,
-		UpdatedAt:      updatedAt,
-		Raw:            resp,
-	}, nil
+	return response.BuildCreatePayment(resp)
 }
 
 func (b *nowPaymentsPG) GetPayment(ctx context.Context, paymentID string) (*models.GetPaymentResponse, error) {
