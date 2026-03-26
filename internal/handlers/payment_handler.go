@@ -142,7 +142,7 @@ func (h *PaymentHandler) handleWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
-	h.logger.Info("webhook received", "provider", provider, "payload", strings.TrimSpace(string(payload)))
+	h.logger.Debug("webhook received", "provider", provider, "payload", strings.TrimSpace(string(payload)))
 
 	resp, err := h.paymentService.HandleWebhook(c.Request.Context(), provider, payload, c.Request.Header)
 	if err != nil {
