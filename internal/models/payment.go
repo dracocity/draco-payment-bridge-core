@@ -67,8 +67,8 @@ type CreatePaymentResponse struct {
 
 	Amount          string `json:"amount"`
 	Currency        string `json:"currency"`
-	ReceiveAmount   string `json:"receive_amount"`   // receive amount
-	ReceiveCurrency string `json:"receive_currency"` // receive currency
+	ReceiveCurrency string `json:"receive_currency"`           // receive currency
+	EstimatedAmount string `json:"estimated_amount,omitempty"` // estimated amount
 
 	OrderID     string `json:"order_id"`              // Merchant's order identifier associated with this payment
 	Description string `json:"description,omitempty"` // description
