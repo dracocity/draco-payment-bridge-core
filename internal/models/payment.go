@@ -73,7 +73,7 @@ type CreatePaymentResponse struct {
 	OrderID     string `json:"order_id"`              // Merchant's order identifier associated with this payment
 	Description string `json:"description,omitempty"` // description
 
-	ExpiresAt int64 `json:"expires_At"` // Expiration timestamp after which payment is no longer valid
+	ExpiresAt int64 `json:"expires_at"` // Expiration timestamp after which payment is no longer valid
 	CreatedAt int64 `json:"created_at"` // Timestamp when the payment was created
 	UpdatedAt int64 `json:"updated_at"` // Last provider update timestamp (unix milli)
 

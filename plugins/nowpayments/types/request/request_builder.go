@@ -53,7 +53,7 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, er
 func BuildCreateInvoicePayment(req models.CreatePaymentRequest) (*CreateInvoicePayment, error) {
 	r := &CreateInvoicePayment{
 		InvoiceID:        req.InvoiceID,
-		PayCurrency:      req.ReceiveCurrency,
+		PayCurrency:      strings.ToLower(strings.TrimSpace(req.ReceiveCurrency)),
 		OrderDescription: strings.TrimSpace(req.Description),
 		CustomerEmail:    req.CustomerEmail,
 	}
