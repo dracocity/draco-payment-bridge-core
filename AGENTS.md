@@ -1,8 +1,16 @@
-# Codex instructions
+# Codex Instructions
 
-Do NOT run Go tests automatically.
+## Scope
 
-- Never execute: go test ./...
-- Do not run integration tests.
 - Only modify code and open PR.
-- When asked to commit changes, use the commit message format `type: content` in English.
+
+## Go Test Policy
+
+- Do not run Go tests automatically.
+- Never run `go test ./...`.
+- Do not run integration tests.
+- You may run tests in `plugins/nowpayments/nowpayments_test.go` only when explicitly requested.
+
+## Commit Message Format
+
+- When asked to commit changes, use English commit messages in the format: `type: content`.
