@@ -96,15 +96,24 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest, apiToken string) (*
 		if payload.Buyer != nil {
 			b := *payload.Buyer
 			r.Buyer = &b
-			r.Buyer.Email = req.BuyerEmail
+			r.Buyer.Email = req.CustomerEmail
 		}
 		r.JsonPayProRequired = payload.JsonPayProRequired
 		r.AcceptanceWindow = payload.AcceptanceWindow
 	}
 
 	if r.Buyer == nil {
-		r.Buyer = &CreateInvoiceBuyer{Email: req.BuyerEmail}
+		r.Buyer = &CreateInvoiceBuyer{Email: req.CustomerEmail}
 	}
 
 	return r, nil
+}
+
+func BuildCreateRefundRequest(req models.CreateRefundRequest, apiToken string) *CreateRefundRequest {
+	return &CreateRefundRequest{
+		Amount:    req.Amount,
+		InvoiceID: strings.TrimSpace(req.PaymentID),
+		Token:     apiToken,
+		Reference: strings.TrimSpace(req.Reason),
+	}
 }

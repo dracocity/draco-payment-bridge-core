@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
+	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/services"
 	"github.com/gin-gonic/gin"
@@ -15,27 +17,29 @@ type PaymentService interface {
 	CreatePaymentLink(ctx context.Context, provider string, req models.CreatePaymentLinkRequest) (*models.CreatePaymentLinkResponse, error)
 	CreatePayment(ctx context.Context, provider string, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error)
 	GetPayment(ctx context.Context, provider, paymentID string) (*models.GetPaymentResponse, error)
-	Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error)
-	HandleWebhook(ctx context.Context, provider string, payload []byte, headers map[string][]string) (*models.WebhookResult, error)
+	CreateRefund(ctx context.Context, provider string, req models.CreateRefundRequest) (*models.CreateRefundResponse, error)
+	HandleWebhook(ctx context.Context, provider string, payload []byte, header http.Header) (*models.WebhookResult, error)
 }
 
 // PaymentHandler provides HTTP handlers for the payment API.
 type PaymentHandler struct {
 	paymentService PaymentService
+	logger         logger.Logger
 }
 
 func New(paymentService PaymentService) *PaymentHandler {
 	return &PaymentHandler{
 		paymentService: paymentService,
+		logger:         logger.WithModule("payment-handler"),
 	}
 }
 
 func (h *PaymentHandler) RegisterRoutes(router *gin.Engine) {
 	router.GET("/api/v1/health", h.handleHealth)
-	router.POST("/api/v1/providers/:provider/payment-link", h.handleCreatePaymentLink)
+	router.POST("/api/v1/providers/:provider/payment-links", h.handleCreatePaymentLink)
 	router.POST("/api/v1/providers/:provider/payments", h.handleCreatePayment)
 	router.GET("/api/v1/providers/:provider/payments/:paymentId", h.handleGetPayment)
-	router.POST("/api/v1/providers/:provider/payments/refund", h.handleRefund)
+	router.POST("/api/v1/providers/:provider/refunds", h.handleCreateRefund)
 	router.POST("/api/v1/providers/:provider/webhooks", h.handleWebhook)
 }
 
@@ -105,18 +109,20 @@ func (h *PaymentHandler) handleGetPayment(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *PaymentHandler) handleRefund(c *gin.Context) {
-	var req models.RefundRequest
+func (h *PaymentHandler) handleCreateRefund(c *gin.Context) {
+	provider := c.Param("provider")
+
+	var req models.CreateRefundRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
-	if req.Provider == "" || req.PaymentID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "provider and payment_id are required"})
+	if req.PaymentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "payment_id are required"})
 		return
 	}
 
-	resp, err := h.paymentService.Refund(c.Request.Context(), req)
+	resp, err := h.paymentService.CreateRefund(c.Request.Context(), provider, req)
 	if err != nil {
 		if errors.Is(err, services.ErrUnknownProvider) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "unknown provider"})
@@ -136,6 +142,7 @@ func (h *PaymentHandler) handleWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
+	h.logger.Debug("webhook received", "provider", provider, "payload", strings.TrimSpace(string(payload)))
 
 	resp, err := h.paymentService.HandleWebhook(c.Request.Context(), provider, payload, c.Request.Header)
 	if err != nil {

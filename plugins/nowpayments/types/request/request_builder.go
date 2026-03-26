@@ -38,12 +38,6 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, er
 		CancelURL:        strings.TrimSpace(req.CancelURL),
 	}
 
-	// TODO:
-	// r.Items = make([]CreateInvoiceItem, 0, len(req.Items))
-	// for _, item := range req.Items {
-	// 	})
-	// }
-
 	if len(req.ProviderPayload) > 0 {
 		var payload CreateInvoicePayload
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
@@ -57,9 +51,11 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, er
 }
 
 func BuildCreateInvoicePayment(req models.CreatePaymentRequest) (*CreateInvoicePayment, error) {
-
 	r := &CreateInvoicePayment{
-		InvoiceID: req.InvoiceID,
+		InvoiceID:        req.InvoiceID,
+		PayCurrency:      strings.ToLower(strings.TrimSpace(req.ReceiveCurrency)),
+		OrderDescription: strings.TrimSpace(req.Description),
+		CustomerEmail:    req.CustomerEmail,
 	}
 
 	if len(req.ProviderPayload) > 0 {
@@ -67,6 +63,8 @@ func BuildCreateInvoicePayment(req models.CreatePaymentRequest) (*CreateInvoiceP
 		if err := json.Unmarshal(req.ProviderPayload, &payload); err != nil {
 			return nil, fmt.Errorf("invalid provider_payload: %w", err)
 		}
+		r.PayoutAddress = payload.PayoutAddress
+		r.PayoutExtraID = payload.PayoutExtraID
 	}
 
 	return r, nil

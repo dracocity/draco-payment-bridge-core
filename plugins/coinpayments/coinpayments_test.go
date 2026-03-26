@@ -57,8 +57,8 @@ func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T
 			Quantity: 1,
 			Amount:   "3.21",
 		}},
-		BuyerEmail: "test@draco.com",
-		WebhookURL: "https://local.draco.city/api/v1/providers/coinpayments/webhooks",
+		CustomerEmail: "test@draco.com",
+		WebhookURL:    "https://local.draco.city/api/v1/providers/coinpayments/webhooks",
 	})
 
 	if err != nil {

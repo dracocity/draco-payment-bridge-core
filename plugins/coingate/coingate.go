@@ -131,22 +131,21 @@ func (b *coingatePG) GetPayment(ctx context.Context, orderID string) (*models.Ge
 	}
 
 	return &models.GetPaymentResponse{
-		Status:         normalizeCoinGateStatus(resp.Status),
-		ProviderStatus: strings.TrimSpace(resp.Status),
-		PaymentID:      strconv.FormatInt(resp.ID, 10),
-		OrderID:        strings.TrimSpace(resp.OrderID),
-		Currency:       currency,
-		Amount:         amount,
-		CreatedAt:      toUnixMilli(resp.CreatedAt),
-		Raw:            resp,
+		Status:    normalizeCoinGateStatus(resp.Status),
+		PaymentID: strconv.FormatInt(resp.ID, 10),
+		OrderID:   strings.TrimSpace(resp.OrderID),
+		Currency:  currency,
+		Amount:    amount,
+		CreatedAt: toUnixMilli(resp.CreatedAt),
+		Raw:       resp,
 	}, nil
 }
 
-func (b *coingatePG) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	return &models.RefundResponse{}, nil
+func (b *coingatePG) CreateRefund(ctx context.Context, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
+	return &models.CreateRefundResponse{}, nil
 }
 
-func (b *coingatePG) HandleWebhook(ctx context.Context, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (b *coingatePG) HandleWebhook(ctx context.Context, payload []byte, header http.Header) (*models.WebhookResult, error) {
 	return &models.WebhookResult{
 		Accepted: true,
 		Message:  "webhook received",

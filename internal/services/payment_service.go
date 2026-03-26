@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
@@ -71,27 +72,27 @@ func (s *PaymentService) GetPayment(ctx context.Context, provider, paymentID str
 	return resp, nil
 }
 
-func (s *PaymentService) Refund(ctx context.Context, req models.RefundRequest) (*models.RefundResponse, error) {
-	p, ok := s.pgRegistry.Get(req.Provider)
-	if !ok {
-		return nil, ErrUnknownProvider
-	}
-
-	resp, err := p.Refund(ctx, req)
-	if err != nil {
-		s.logger.Warn("failed to refund payment", "provider", req.Provider, "error", err)
-		return nil, fmt.Errorf("refund payment: %w", err)
-	}
-	return resp, nil
-}
-
-func (s *PaymentService) HandleWebhook(ctx context.Context, provider string, payload []byte, headers map[string][]string) (*models.WebhookResult, error) {
+func (s *PaymentService) CreateRefund(ctx context.Context, provider string, req models.CreateRefundRequest) (*models.CreateRefundResponse, error) {
 	p, ok := s.pgRegistry.Get(provider)
 	if !ok {
 		return nil, ErrUnknownProvider
 	}
 
-	resp, err := p.HandleWebhook(ctx, payload, headers)
+	resp, err := p.CreateRefund(ctx, req)
+	if err != nil {
+		s.logger.Warn("failed to create refund", "provider", provider, "error", err)
+		return nil, fmt.Errorf("create refund: %w", err)
+	}
+	return resp, nil
+}
+
+func (s *PaymentService) HandleWebhook(ctx context.Context, provider string, payload []byte, header http.Header) (*models.WebhookResult, error) {
+	p, ok := s.pgRegistry.Get(provider)
+	if !ok {
+		return nil, ErrUnknownProvider
+	}
+
+	resp, err := p.HandleWebhook(ctx, payload, header)
 	if err != nil {
 		s.logger.Warn("failed to process webhook", "provider", provider, "error", err)
 		return nil, fmt.Errorf("handle webhook: %w", err)

@@ -2,6 +2,7 @@ package request
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -36,7 +37,7 @@ func BuildRequestHeader(clientID, clientSecret, method, baseURL, path string, qu
 
 	message := "\ufeff" + strings.ToUpper(method) + requestURL + clientID + timestamp + payloadMessage
 
-	signature, err := crypto.GenerateHMACSignature(message, clientSecret, "base64")
+	signature, err := crypto.GenerateHMACSignature(message, sha256.New, clientSecret, "base64")
 	if err != nil {
 		return nil, fmt.Errorf("generate hmac signature: %w", err)
 	}
@@ -66,7 +67,7 @@ func BuildCreateInvoice(req models.CreatePaymentLinkRequest) (*CreateInvoice, er
 		}},
 		Payment: &CreateInvoicePayment{
 			PaymentCurrency: req.ReceiveCurrency,
-			RefundEmail:     req.BuyerEmail,
+			RefundEmail:     req.CustomerEmail,
 		},
 		SuccessURL: req.SuccessURL,
 		CancelURL:  req.CancelURL,
