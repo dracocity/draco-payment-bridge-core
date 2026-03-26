@@ -21,7 +21,7 @@ func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return f(r)
 }
 
-func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
+func TestCreatePaymentLink_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	t.Parallel()
 
 	cfgPath := "../../.vscode/tmp/config.toml"
@@ -82,6 +82,43 @@ func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("CreatePaymentLink returned error: %v", err)
+	}
+
+	fmt.Println(resp)
+}
+
+func TestCreatePayment_RequestsSandboxEndpointWhenModeIsSandbox(t *testing.T) {
+	t.Parallel()
+
+	cfgPath := "../../.vscode/tmp/config.toml"
+	cfg, err := config.Load(cfgPath)
+	if err != nil {
+		t.Fatalf("failed to load config file: %v", err)
+	}
+
+	if err := logger.Init(cfg.Log); err != nil {
+		log.Fatal(err)
+	}
+	defer logger.Sync()
+
+	pgCfg, ok := cfg.Providers["nowpayments"]
+	if !ok {
+		t.Fatal("nowpayments config was not loaded from file")
+	}
+
+	p := &nowPaymentsPlugin{}
+	if err := p.Load(pgCfg); err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	resp, err := p.pg.CreatePayment(context.Background(), models.CreatePaymentRequest{
+		InvoiceID:       "6201138408",
+		ReceiveCurrency: "BTC",
+		Description:     "DESCRIPTION",
+		CustomerEmail:   "test@draco.city",
+	})
+	if err != nil {
+		t.Fatalf("CreatePayment returned error: %v", err)
 	}
 
 	fmt.Println(resp)
