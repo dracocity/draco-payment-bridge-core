@@ -17,7 +17,7 @@ sequenceDiagram
 
     OS->>Main: app.Run(os.Args)
     Main->>Cfg: Load(configPath)
-    Cfg-->>Main: Config (Port, PluginDir, Providers, Log)
+    Cfg-->>Main: Config (Listen, PluginDir, Providers, Log)
     Main->>Log: Init(cfg.Log)
 
     Main->>Loader: NewPluginLoader(cfg.PluginDir)
@@ -55,7 +55,7 @@ sequenceDiagram
     participant Reg as Registry
     participant PG as PaymentGateway Plugin
 
-    Client->>Router: POST /api/payment
+    Client->>Router: POST /api/v1/providers/:provider/payments
     Router->>H: handleCreatePayment
     H->>H: 요청 바인딩/검증 (provider 확인)
     H->>Reg: Get(provider)
