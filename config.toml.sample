@@ -21,21 +21,3 @@ mode = "sandbox" # production | sandbox
 api_key = "NOWPAYMENTS-API-KEY"
 ipn_secret = "NOWPAYMENTS-IPN-SECRET"
 http_timeout = "20s"
-
-[providers.bitpay]
-mode = "sandbox" # production | sandbox
-api_token = "BITPAY-API-TOKEN" # merchant facade type
-api_private_key = "BITPAY-PRIVATE-KEY" # merchant facade type (hex)
-http_timeout = "20s"
-
-[providers.coingate]
-mode = "sandbox" # production | sandbox
-api_token = "COINGATE-API-TOKEN"
-callback_secret = "COINGATE-CALLBACK-SECRET" # You need to define the secret.
-http_timeout = "20s"
-
-[providers.coinpayments]
-api_type = "a-api" # "a-api" | "b-api"
-client_id = "COINPAYMENTS-CLIENT-ID"
-client_secret = "COINPAYMENTS-CLIENT-SECRET"
-http_timeout = "20s"
