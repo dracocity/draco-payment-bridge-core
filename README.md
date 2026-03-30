@@ -4,7 +4,7 @@ Go 기반 암호화폐 결제 브리지 서버입니다. 결제 제공자 플러
 
 ## 주요 기능
 
-- 다중 결제 제공자 통합 (`nowpayments`, `bitpay`, `coingate`, `coinpayments`)
+- 다중 결제 제공자 통합 (`nowpayments`, `bitpay(예정)`, `coingate(예정)`, `coinpayments(예정)`)
 - 플러그인 기반 로딩 (`plugin_dir` 내 `.so` 자동 스캔)
 - 통합 결제 API (`/api/v1/...`)
 - TOML + 환경변수 기반 설정 (`DPBC_*`)
@@ -33,9 +33,6 @@ chmod +x scripts/build-plugins.sh
 기본 출력 경로:
 
 - `dist/release/plugins/nowpayments.so`
-- `dist/release/plugins/bitpay.so`
-- `dist/release/plugins/coingate.so`
-- `dist/release/plugins/coinpayments.so`
 
 ### 3. 설정 파일 생성
 
@@ -74,20 +71,6 @@ listen = "tcp@127.0.0.1:8080,unix@/tmp/dpbc.sock"
 mode = "sandbox"
 api_key = "NOWPAYMENTS-API-KEY"
 ipn_secret = "NOWPAYMENTS-IPN-SECRET"
-
-[providers.bitpay]
-mode = "sandbox"
-api_token = "BITPAY-API-TOKEN"
-
-[providers.coingate]
-mode = "sandbox"
-api_token = "COINGATE-API-TOKEN"
-callback_secret = "COINGATE-CALLBACK-SECRET"
-
-[providers.coinpayments]
-api_type = "a-api"
-client_id = "COINPAYMENTS-CLIENT-ID"
-client_secret = "COINPAYMENTS-CLIENT-SECRET"
 ```
 
 ### 환경변수 오버라이드
@@ -111,7 +94,7 @@ Base Path: `/api/v1`
 ```json
 {
   "status": "ok",
-  "providers": ["nowpayments", "bitpay"]
+  "providers": ["nowpayments"]
 }
 ```
 
