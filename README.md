@@ -52,7 +52,8 @@ plugin_dir = "./dist/release/plugins"
 go run ./cmd/dpbc -c ./config.toml
 ```
 
-기본 `-c` 값은 `./config.toml` 입니다.
+기본 `-c` 값은 `./config.toml` 입니다.  
+`-c ""`(빈 문자열)로 실행하면 파일 로딩 없이 환경변수/기본값만 사용합니다.
 
 ## 설정
 
@@ -60,6 +61,7 @@ go run ./cmd/dpbc -c ./config.toml
 
 - 샘플: `config.toml.sample`
 - 로드 우선순위: `config.toml` > 환경변수 > 기본값
+- `plugin_dir`가 상대 경로면 실행 시 절대 경로로 변환되며, 디렉터리가 없으면 자동 생성됩니다.
 
 ### 핵심 설정 항목
 
@@ -77,9 +79,9 @@ ipn_secret = "NOWPAYMENTS-IPN-SECRET"
 
 - 리슨 주소: `DPBC_LISTEN="tcp@127.0.0.1:8080,unix@/tmp/dpbc.sock"`
 - 플러그인 경로: `DPBC_PLUGIN_DIR`
-- 로그: `DPBC_LOG_LEVEL`, `DPBC_LOG_FORMAT` 등
+- 로그: `DPBC_LOG_LEVEL`, `DPBC_LOG_FORMAT`, `DPBC_LOG_STDOUT`, `DPBC_LOG_FILE` 등
 - 제공자별: `DPBC_PROVIDERS_<PROVIDER>_<KEY>`
-  - 예: `DPBC_PROVIDERS_NOWPAYMENTS_API_KEY=...`
+예: `DPBC_PROVIDERS_NOWPAYMENTS_API_KEY=...`
 
 ## API
 
@@ -100,7 +102,7 @@ Base Path: `/api/v1`
 
 ### 2) 결제 링크 생성
 
-`POST /api/v1/providers/:provider/payment-link`
+`POST /api/v1/providers/:provider/payment-links`
 
 요청 예시:
 
@@ -111,7 +113,7 @@ Base Path: `/api/v1`
   "receive_currency": "BTC",
   "order_id": "ORDER-123",
   "description": "Test payment",
-  "buyer_email": "buyer@example.com",
+  "customer_email": "buyer@example.com",
   "webhook_url": "https://example.com/webhook",
   "success_url": "https://example.com/success",
   "cancel_url": "https://example.com/cancel"
@@ -127,10 +129,10 @@ Base Path: `/api/v1`
 ```json
 {
   "invoice_id": "inv-123",
-  "order_id": "ORDER-123",
-  "amount": "100.00",
-  "currency": "USD",
-  "crypto": "BTC"
+  "receive_currency": "BTC",
+  "description": "Test payment",
+  "customer_email": "buyer@example.com",
+  "provider_payload": {}
 }
 ```
 
@@ -140,13 +142,12 @@ Base Path: `/api/v1`
 
 ### 5) 환불
 
-`POST /api/v1/providers/:provider/payments/refund`
+`POST /api/v1/providers/:provider/refunds`
 
 요청 예시:
 
 ```json
 {
-  "provider": "nowpayments",
   "payment_id": "payment-id-123",
   "amount": 50,
   "reason": "customer request"
