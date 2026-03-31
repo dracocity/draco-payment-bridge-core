@@ -2,6 +2,7 @@ package httpx
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -49,9 +50,11 @@ func TestClientDo_MergesHeadersAndQueryAndDecodesResponse(t *testing.T) {
 			t.Fatalf("X-Request = %q, want request-header", got)
 		}
 
-		buf := make([]byte, 1024)
-		n, _ := r.Body.Read(buf)
-		body := strings.TrimSpace(string(buf[:n]))
+		rawBody, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("ReadAll() error = %v", err)
+		}
+		body := strings.TrimSpace(string(rawBody))
 		if !strings.Contains(body, "\"text\":\"a<b\"") {
 			t.Fatalf("body = %s, want unescaped html content", body)
 		}
