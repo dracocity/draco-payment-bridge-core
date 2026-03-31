@@ -1,0 +1,31 @@
+project_name: dpbc
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: dpbc
+    main: ./cmd/dpbc
+    binary: dpbc
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - id: dpbc-archive
+    builds:
+      - dpbc
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  draft: false
+  prerelease: auto
