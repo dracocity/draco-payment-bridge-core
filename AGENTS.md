@@ -6,10 +6,9 @@
 
 ## Go Test Policy
 
-- Do not run Go tests automatically.
-- Never run `go test ./...`.
-- Do not run integration tests.
-- You may run tests in `plugins/nowpayments/nowpayments_test.go` only when explicitly requested.
+- Run Go tests relevant to the code you changed.
+- You may run `go test ./...` when broader verification is needed.
+<!-- - Do not run integration tests unless explicitly requested. -->
 
 ## Commit Message Format
 

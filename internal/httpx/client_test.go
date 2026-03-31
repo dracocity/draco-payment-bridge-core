@@ -5,9 +5,31 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
 )
+
+func TestMain(m *testing.M) {
+	if err := logger.Init(config.LogConfig{
+		Level:  "error",
+		Format: "json",
+		Output: config.LogOutputConfig{
+			Stdout: true,
+		},
+		Rotation: &config.LogRotationConfig{
+			MaxSize:  10,
+			MaxAge:   1,
+			Compress: false,
+		},
+	}); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
 
 func TestClientDo_MergesHeadersAndQueryAndDecodesResponse(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

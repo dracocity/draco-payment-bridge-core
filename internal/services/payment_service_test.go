@@ -4,12 +4,33 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/dracocity/draco-payment-bridge-core/internal/config"
+	"github.com/dracocity/draco-payment-bridge-core/internal/logger"
 	"github.com/dracocity/draco-payment-bridge-core/internal/models"
 	"github.com/dracocity/draco-payment-bridge-core/internal/pg"
 )
+
+func TestMain(m *testing.M) {
+	if err := logger.Init(config.LogConfig{
+		Level:  "error",
+		Format: "json",
+		Output: config.LogOutputConfig{
+			Stdout: true,
+		},
+		Rotation: &config.LogRotationConfig{
+			MaxSize:  10,
+			MaxAge:   1,
+			Compress: false,
+		},
+	}); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
 
 type mockGateway struct {
 	name string
