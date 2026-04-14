@@ -179,3 +179,4 @@ draco-payment-bridge-core/
 ## 참고
 
 - 플러그인 구현 상세는 `PLUGINS.md`를 참고하세요.
+- 코드 스타일 가이드는 `docs/code-style.md`를 참고하세요.
